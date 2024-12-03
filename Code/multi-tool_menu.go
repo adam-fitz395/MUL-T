@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"log"
+	"os"
 	"os/exec"
 	"time"
 )
@@ -24,6 +25,7 @@ func main() {
 	// Create a label with word wrapping
 	outputLabel := widget.NewLabel("")
 	outputLabel.Wrapping = fyne.TextWrapWord
+	outputLabel.Hidden = true
 
 	loadMainMenu(multiWindow, outputLabel)
 
@@ -45,6 +47,12 @@ func loadMainMenu(multiWindow fyne.Window, outputLabel *widget.Label) {
 
 		widget.NewButton("NFC", func() {
 			// Insert sub-menu function
+		}),
+
+		// This button will either be removed or functionally changed when implemented onto Pi,
+		// for now it just quits the application
+		widget.NewButton("Quit", func() {
+			os.Exit(0)
 		}),
 	))
 }
@@ -87,11 +95,14 @@ func runSniffer(outputLabel *widget.Label) {
 	// Set sniffing tracker to true
 	isSniffing = true
 
+	// Display output label
+	outputLabel.Hidden = false
+
 	// Create a temporary log file with a timestamp
 	logFileName = fmt.Sprintf("sniff_log_%d.pcap", time.Now().Unix())
 
 	// Set command to run ettercap on devices interface and to log using the defined logfile
-	cmd = exec.Command("sudo", "ettercap", "-T", "-w", logFileName, "-i", "wlo1")
+	cmd = exec.Command("sudo", "ettercap", "-T", "-w", logFileName, "-i", "wlo1") // This line will need to change to be the wireless interface on the Pi!!!
 
 	// Create a buffered stderr for error capture
 	stderr := &bytes.Buffer{}
