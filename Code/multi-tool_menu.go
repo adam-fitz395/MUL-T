@@ -16,6 +16,7 @@ var cmd *exec.Cmd
 var logFileName string
 
 func main() {
+	// Create app and window
 	multiMenu := app.New()
 	multiWindow := multiMenu.NewWindow("Network Sniffer")
 
@@ -23,17 +24,28 @@ func main() {
 	outputLabel := widget.NewLabel("")
 	outputLabel.Wrapping = fyne.TextWrapWord
 
+	// Load content of window
 	multiWindow.SetContent(container.NewVBox(
 		widget.NewButton("Wi-Fi", func() {
 			loadWifiMenu(multiWindow, outputLabel)
 		}),
 		outputLabel, // Display the label in the main content
+
+		widget.NewButton("Bluetooth", func() {
+			// Insert sub-menu function
+		}),
+
+		widget.NewButton("NFC", func() {
+			// Insert sub-menu function
+		}),
 	))
 
+	// Resize window and show
 	multiWindow.Resize(fyne.NewSize(400, 300)) // Set a reasonable window size
 	multiWindow.ShowAndRun()
 }
 
+// Function that loads Wi-Fi sub-menu
 func loadWifiMenu(multiWindow fyne.Window, outputLabel *widget.Label) {
 	multiWindow.SetContent(container.NewVBox(
 		widget.NewButton("Ettercap Sniff", func() {
@@ -43,6 +55,7 @@ func loadWifiMenu(multiWindow fyne.Window, outputLabel *widget.Label) {
 	))
 }
 
+// Function to load wi-fi sniffer sub-menu
 func loadWifiSniffer(multiWindow fyne.Window, outputLabel *widget.Label) {
 	multiWindow.SetContent(container.NewVBox(
 		outputLabel, // Show the label for output
@@ -56,9 +69,12 @@ func loadWifiSniffer(multiWindow fyne.Window, outputLabel *widget.Label) {
 	))
 }
 
+// Function that runs wi-fi sniffer when start button is hit
 func runSniffer(outputLabel *widget.Label) {
 	// Create a temporary log file with a timestamp
 	logFileName = fmt.Sprintf("sniff_log_%d.pcap", time.Now().Unix())
+
+	// Set command to run ettercap on devices interface and to log using the defined logfile
 	cmd = exec.Command("sudo", "ettercap", "-T", "-w", logFileName, "-i", "wlo1")
 
 	// Create a buffered stderr for error capture
@@ -82,6 +98,7 @@ func runSniffer(outputLabel *widget.Label) {
 	}
 }
 
+// Function that stops sniffing when stop button is hit
 func stopSniffing(outputLabel *widget.Label) {
 	// Check if there is an ongoing sniffing process to stop
 	if cmd != nil && cmd.Process != nil {
@@ -98,6 +115,7 @@ func stopSniffing(outputLabel *widget.Label) {
 	}
 }
 
+// Update label to display different text
 func updateLabel(label *widget.Label, s string) {
 	label.SetText(s)
 	label.Refresh()
