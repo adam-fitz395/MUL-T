@@ -21,16 +21,14 @@ func main() {
 	// Create app and window
 	multiMenu := app.New()
 	multiWindow := multiMenu.NewWindow("Network Sniffer")
+	multiWindow.Resize(fyne.NewSize(400, 300)) // Set a reasonable window size
 
-	// Create a label with word wrapping
+	// Create a label with word wrapping and hide
 	outputLabel := widget.NewLabel("")
 	outputLabel.Wrapping = fyne.TextWrapWord
 	outputLabel.Hidden = true
 
 	loadMainMenu(multiWindow, outputLabel)
-
-	// Resize window and show
-	multiWindow.Resize(fyne.NewSize(400, 300)) // Set a reasonable window size
 	multiWindow.ShowAndRun()
 }
 
@@ -45,11 +43,15 @@ func loadMainMenu(multiWindow fyne.Window, outputLabel *widget.Label) {
 			// Insert sub-menu function
 		}),
 
-		widget.NewButton("NFC", func() {
+		widget.NewButton("NFC/RFID", func() {
 			// Insert sub-menu function
 		}),
 
-		// This button will either be removed or functionally changed when implemented onto Pi,
+		widget.NewButton("IR", func() {
+			// Insert sub-menu function
+		}),
+
+		// The button below will either be removed or functionally changed when implemented onto Pi,
 		// for now it just quits the application
 		widget.NewButton("Quit", func() {
 			os.Exit(0)
@@ -72,7 +74,8 @@ func loadWifiMenu(multiWindow fyne.Window, outputLabel *widget.Label) {
 // Function to load wi-fi sniffer sub-menu
 func loadWifiSniffer(multiWindow fyne.Window, outputLabel *widget.Label) {
 	multiWindow.SetContent(container.NewVBox(
-		outputLabel, // Show the label for output
+		outputLabel, // Label for sniffing output
+
 		widget.NewButton("Start Sniffing", func() {
 			outputLabel.SetText("Starting sniffing...")
 			go runSniffer(outputLabel)
@@ -92,16 +95,13 @@ func loadWifiSniffer(multiWindow fyne.Window, outputLabel *widget.Label) {
 // Function that runs wi-fi sniffer when start button is hit
 func runSniffer(outputLabel *widget.Label) {
 
-	// Set sniffing tracker to true
 	isSniffing = true
-
-	// Display output label
 	outputLabel.Hidden = false
 
-	// Create a temporary log file with a timestamp
+	// Create a temporary log file with a Unix timestamp
 	logFileName = fmt.Sprintf("sniff_log_%d.pcap", time.Now().Unix())
 
-	// Set command to run ettercap on devices interface and to log using the defined logfile
+	// Define command to run ettercap on devices network interface and to log using the defined logfile
 	cmd = exec.Command("sudo", "ettercap", "-T", "-w", logFileName, "-i", "wlo1") // This line will need to change to be the wireless interface on the Pi!!!
 
 	// Create a buffered stderr for error capture
@@ -115,7 +115,6 @@ func runSniffer(outputLabel *widget.Label) {
 		return
 	}
 
-	// Display that sniffing is in progress
 	updateLabel(outputLabel, "Sniffing in progress...")
 
 	// Wait for the command to finish (without printing stdout)
@@ -141,11 +140,10 @@ func stopSniffing(outputLabel *widget.Label) {
 		updateLabel(outputLabel, "No sniffing process to stop.")
 	}
 
-	// Set sniffing tracker to false
 	isSniffing = false
 }
 
-// Update label to display different text
+// Update label text with new value
 func updateLabel(label *widget.Label, s string) {
 	label.SetText(s)
 	label.Refresh()
