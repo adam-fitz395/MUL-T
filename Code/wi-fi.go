@@ -57,7 +57,7 @@ func runSniffer(outputLabel *widget.Label) {
 	logFileName = fmt.Sprintf("sniff_log_%d.pcap", time.Now().Unix())
 
 	// Define command to run ettercap on devices network interface and to log using the defined logfile
-	cmd = exec.Command("sudo", "ettercap", "-T", "-w", logFileName, "-i", "wlo1") // This line will need to change to be the wireless interface on the Pi!!!
+	cmd = exec.Command("sudo", "ettercap", "-T", "-w", logFileName, "-i", "eth0") // This line will need to change to be the wireless interface on the Pi!!!
 
 	// Create a buffered stderr for error capture
 	stderr := &bytes.Buffer{}
