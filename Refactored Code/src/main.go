@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/rivo/tview"
 )
 
@@ -13,17 +14,26 @@ func main() {
 	app = tview.NewApplication()
 	pages = tview.NewPages()
 
-	loadMainMenu()
-	loadWifiMenu()
+	instantiateMenus()
 
-	// IMPORTANT: Use 'true' so the root fills the terminal window.
+	// Run application or return error
 	if err := app.SetRoot(pages, true).
+		SetFocus(pages).
 		EnableMouse(true).
 		Run(); err != nil {
+		fmt.Println("An error has occured:", err)
 		panic(err)
 	}
 }
 
+// Function that instantiates all menus
+func instantiateMenus() {
+	loadMainMenu()
+	loadWifiMenu()
+	loadSniffingMenu()
+}
+
+// Function to load main menu
 func loadMainMenu() {
 	wifiButton := tview.NewButton("WiFi Menu").
 		SetSelectedFunc(func() {
