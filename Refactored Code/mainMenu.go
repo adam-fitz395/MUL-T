@@ -1,34 +1,44 @@
 package main
 
 import (
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
+var (
+	app   *tview.Application
+	pages *tview.Pages
+)
+
 func main() {
-	app := tview.NewApplication()
+	app = tview.NewApplication()
+	pages = tview.NewPages()
 
-	// Create a button with a visible border
-	wifiButton := tview.NewButton("Wifi").
-		SetBorder(true).
-		SetBorderColor(tcell.ColorGreen).
-		SetBackgroundColor(tcell.ColorWhite)
-
-	// Create a Flex in row-direction (vertical stacking)
-	flex := tview.NewFlex().
-		SetDirection(tview.FlexRow).
-		// We'll give the button a fixed size of 3 rows (you can adjust),
-		// proportion=1 just means "take leftover space if any is left",
-		// and `true` means this item can receive focus.
-		AddItem(wifiButton, 2, 1, true).
-		SetTitle("Wifi").
-		SetBorder(true).
-		SetBorderColor(tcell.ColorBlue)
+	loadMainMenu()
+	loadWifiMenu()
 
 	// IMPORTANT: Use 'true' so the root fills the terminal window.
-	if err := app.SetRoot(flex, true).
+	if err := app.SetRoot(pages, true).
 		EnableMouse(true).
 		Run(); err != nil {
 		panic(err)
 	}
+}
+
+func loadMainMenu() {
+	wifiButton := tview.NewButton("WiFi Menu").
+		SetSelectedFunc(func() {
+			pages.SwitchToPage("wifi") // Switch to the WiFi page
+		})
+
+	exitButton := tview.NewButton("Exit").
+		SetSelectedFunc(func() {
+			app.Stop() // Exit the application
+		})
+
+	mainFlex := tview.NewFlex().
+		AddItem(wifiButton, 0, 1, true).
+		AddItem(exitButton, 0, 1, false).
+		SetDirection(tview.FlexRow)
+
+	pages.AddPage("main", mainFlex, true, true) // Add the main page to pages
 }
