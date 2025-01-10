@@ -3,10 +3,11 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/rivo/tview"
 	"log"
 	"os/exec"
 	"time"
+
+	"github.com/rivo/tview"
 )
 
 // Function that loads wi-fi sub-menu
