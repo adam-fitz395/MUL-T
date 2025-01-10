@@ -32,7 +32,7 @@ func loadWifiMenu() {
 // Function that loads wi-fi sniffing sub-menu
 func loadSniffingMenu() {
 	sniffingText := tview.NewTextView().
-		SetLabel("Ready to sniff!")
+		SetText("Ready to sniff!")
 
 	sniffButton := tview.NewButton("Start Sniffing").
 		SetSelectedFunc(func() {
@@ -43,6 +43,9 @@ func loadSniffingMenu() {
 			// Create a buffered stderr for error capture
 			stderr := &bytes.Buffer{}
 			cmd.Stderr = stderr
+
+			sniffingText.Clear()
+			sniffingText.SetText("Sniffing in Progress!")
 
 			// Start the sniffing process
 			if err := cmd.Start(); err != nil {
