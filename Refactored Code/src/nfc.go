@@ -17,6 +17,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to open serial port: %v", err)
 	}
+	fmt.Println("Opened serial port")
 	defer port.Close()
 
 	// Send GetFirmwareVersion command
@@ -27,7 +28,7 @@ func main() {
 	}
 
 	// Wait for response
-	time.Sleep(100 * time.Millisecond) // Wait for PN532 to respond
+	time.Sleep(1 * time.Second) // Wait for PN532 to respond
 	response := make([]byte, 255)
 	n, err := port.Read(response)
 	if err != nil {
