@@ -3,11 +3,9 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"log"
+	"github.com/rivo/tview"
 	"os/exec"
 	"time"
-
-	"github.com/rivo/tview"
 )
 
 // Function that loads wi-fi sub-menu
@@ -37,26 +35,29 @@ func loadSniffingMenu() {
 
 	sniffButton := tview.NewButton("Start Sniffing").
 		SetSelectedFunc(func() {
-			logFileName := fmt.Sprintf("sniff_log_%d.pcap", time.Now().Unix()) // Set logfile name using current time
+			logFileName := fmt.Sprintf("sniff_log_%d.pcap", time.Now().Unix())
 
-			cmd := exec.Command("sudo", "ettercap", "-T", "-w", logFileName, "-i", "eth0") // This line will need to change to be the wireless interface on the Pi!!!
-
-			// Create a buffered stderr for error capture
+			cmd := exec.Command("sudo", "ettercap", "-T", "-w", logFileName, "-i", "eth0")
 			stderr := &bytes.Buffer{}
 			cmd.Stderr = stderr
 
-			sniffingText.Clear()
-			sniffingText.SetText("Sniffing in Progress!")
-
 			// Start the sniffing process
 			if err := cmd.Start(); err != nil {
-				log.Println("Error starting command:", err)
+				sniffingText.SetText(fmt.Sprintf("Error starting command: %v\n", err))
 				return
 			}
 
-			if err := cmd.Wait(); err != nil {
-				log.Println("Command finished with error:", err)
-			}
+			// Go function that waits for the process to finish and updates the text view
+			go func() {
+				err := cmd.Wait()
+				app.QueueUpdateDraw(func() {
+					if err != nil {
+						sniffingText.SetText(fmt.Sprintf("Command finished with error: %v\n", err))
+					} else {
+						sniffingText.SetText("Sniffing completed successfully!")
+					}
+				})
+			}()
 		})
 
 	backButton := tview.NewButton("Back").SetSelectedFunc(func() {
