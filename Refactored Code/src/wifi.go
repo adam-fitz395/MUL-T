@@ -10,6 +10,8 @@ import (
 
 // Function that loads wi-fi sub-menu
 func loadWifiMenu() {
+	buttons = nil
+
 	sniffButton := tview.NewButton("Sniff").
 		SetSelectedFunc(func() {
 			pages.SwitchToPage("sniff")
@@ -26,10 +28,14 @@ func loadWifiMenu() {
 		SetDirection(tview.FlexRow)
 
 	pages.AddPage("wifi", wifiFlex, true, false) // Add the WiFi page to pages
+	buttons = append(buttons, sniffButton, backButton)
+	enableTabFocus(wifiFlex, buttons)
 }
 
 // Function that loads wi-fi sniffing sub-menu
 func loadSniffingMenu() {
+	buttons = nil
+
 	sniffingText := tview.NewTextView().
 		SetText("Ready to sniff!")
 
@@ -70,5 +76,7 @@ func loadSniffingMenu() {
 		AddItem(backButton, 0, 1, false).
 		SetDirection(tview.FlexRow)
 
+	buttons = append(buttons, sniffButton, backButton)
 	pages.AddPage("sniff", sniffFlex, true, false)
+	enableTabFocus(sniffFlex, buttons)
 }
