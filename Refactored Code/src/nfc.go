@@ -26,6 +26,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to send command: %v", err)
 	}
+	fmt.Println("Sent command")
 
 	// Wait for response
 	time.Sleep(1 * time.Second) // Wait for PN532 to respond
@@ -34,6 +35,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to read response: %v", err)
 	}
+	fmt.Printf("Response: %v\n", string(response[:n]))
 
 	// Check if we received a response
 	if n > 0 {
