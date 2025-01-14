@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"os/exec"
 	"time"
@@ -17,10 +18,15 @@ func loadWifiMenu() {
 			pages.SwitchToPage("sniff")
 		})
 
+	sniffButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
 	backButton := tview.NewButton("Back").
 		SetSelectedFunc(func() {
 			pages.SwitchToPage("main") // Switch back to the main page
 		})
+	backButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
 
 	wifiFlex := tview.NewFlex().
 		AddItem(sniffButton, 0, 1, true).
@@ -66,9 +72,15 @@ func loadSniffingMenu() {
 			}()
 		})
 
+	sniffButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
 	backButton := tview.NewButton("Back").SetSelectedFunc(func() {
 		pages.SwitchToPage("wifi")
 	})
+
+	backButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
 
 	sniffFlex := tview.NewFlex().
 		AddItem(sniffingText, 0, 1, false).
