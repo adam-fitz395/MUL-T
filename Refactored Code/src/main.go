@@ -64,6 +64,7 @@ func loadMainMenu() {
 	NFCButton := tview.NewButton("NFC").
 		SetSelectedFunc(func() {
 			pages.SwitchToPage("nfc")
+			UIDScan()
 		})
 
 	NFCButton.SetBorder(true).
