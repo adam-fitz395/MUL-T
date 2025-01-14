@@ -8,7 +8,7 @@ import (
 	"github.com/tarm/serial"
 )
 
-func main() {
+func UIDScan() {
 	// Open the UART port
 	port, err := serial.OpenPort(&serial.Config{
 		Name: "/dev/ttyS0", // Replace with your UART port (e.g., /dev/ttyUSB0 or COM3)
