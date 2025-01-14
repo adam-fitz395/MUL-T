@@ -31,6 +31,7 @@ func main() {
 	// Wait for response
 	time.Sleep(1 * time.Second) // Wait for PN532 to respond
 	response := make([]byte, 255)
+	fmt.Println(response)
 	n, err := port.Read(response)
 	if err != nil {
 		log.Fatalf("Failed to read response: %v", err)
