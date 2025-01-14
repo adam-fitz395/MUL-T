@@ -8,7 +8,7 @@ import (
 	"github.com/tarm/serial"
 )
 
-func UIDScan() {
+func main() {
 	// Open the UART port
 	port, err := serial.OpenPort(&serial.Config{
 		Name: "/dev/ttyS0", // Replace with your UART port (e.g., /dev/ttyUSB0 or COM3)
@@ -33,6 +33,7 @@ func UIDScan() {
 	response := make([]byte, 255)
 	fmt.Println(response)
 	n, err := port.Read(response)
+	fmt.Println("Read response: ", string(response[:n]))
 	if err != nil {
 		log.Fatalf("Failed to read response: %v", err)
 	}
