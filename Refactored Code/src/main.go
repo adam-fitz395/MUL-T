@@ -33,6 +33,7 @@ func instantiateMenus() {
 	loadMainMenu()
 	loadWifiMenu()
 	loadSniffingMenu()
+	loadScanMenu()
 	loadIRMenu()
 }
 
@@ -40,7 +41,7 @@ func instantiateMenus() {
 func loadMainMenu() {
 	buttons = nil // Set buttons to nil to clear buttons from previous menu
 
-	wifiButton := tview.NewButton("WiFi Menu").
+	wifiButton := tview.NewButton("Wi-Fi Menu").
 		SetSelectedFunc(func() {
 			pages.SwitchToPage("wifi") // Switch to the Wi-Fi page
 		})
