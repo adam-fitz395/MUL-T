@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -57,7 +59,7 @@ func loadSniffingMenu() {
 		SetSelectedFunc(func() {
 			logFileName := fmt.Sprintf("sniff_log_%d.pcap", time.Now().Unix())
 
-			cmd := exec.Command("sudo", "ettercap", "-T", "-w", logFileName, "-i", "eth0")
+			cmd := exec.Command("sudo", "ettercap", "-T", "-w", logFileName, "-i", "wlo1")
 			stderr := &bytes.Buffer{}
 			cmd.Stderr = stderr
 
@@ -107,26 +109,66 @@ func loadScanMenu() {
 	scanText := tview.NewTextView().
 		SetText("Ready to scan network!")
 
+	scanText.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
 	scanButton := tview.NewButton("Start Scan").
 		SetSelectedFunc(func() {
-			cmd := exec.Command("sudo", "iwlist", "wlo0", "scan", "|", "grep", "ESSID")
-			stderr := &bytes.Buffer{}
-			cmd.Stderr = stderr
+			var ssids []string
+			scanText.SetText("Scanning for networks...")
 
-			// Start the sniffing process
+			cmd := exec.Command("sudo", "iw", "wlo1", "scan") // CHANGE THIS TO PI INTERFACE
+			stdout, err := cmd.StdoutPipe()
+			if err != nil {
+				scanText.SetText(fmt.Sprintf("Failed to create pipe: %v\n", err))
+				return
+			}
+
 			if err := cmd.Start(); err != nil {
 				scanText.SetText(fmt.Sprintf("Error starting command: %v\n", err))
 				return
 			}
 
-			// Go function that waits for the process to finish and updates the text view
+			// Channel to handle scanning and output to TUI
+			done := make(chan struct{})
+
+			// Scan line by line for "SSID:" and store the value
 			go func() {
-				err := cmd.Wait()
+				scanner := bufio.NewScanner(stdout)
+				for scanner.Scan() {
+					line := strings.TrimSpace(scanner.Text())
+					if strings.HasPrefix(line, "SSID:") {
+						ssid := strings.TrimPrefix(line, "SSID:")
+						ssids = append(ssids, strings.TrimSpace(ssid))
+					}
+				}
+
+				// Handle potential scanner error
+				if err := scanner.Err(); err != nil {
+					app.QueueUpdateDraw(func() {
+						scanText.SetText(fmt.Sprintf("Error reading output: %v\n", err))
+					})
+					return
+				}
+
+				// Signal scan completion
+				done <- struct{}{}
+			}()
+
+			//Update TUI with list of SSIDs or an error message if none are found
+			go func() {
+				<-done
+				// Wait for the scan to finish
+				cmd.Wait()
+
+				// Update the scanText with the list of ESSIDs
 				app.QueueUpdateDraw(func() {
-					if err != nil {
-						scanText.SetText(fmt.Sprintf("Command finished with error: %v\n", err))
+					if len(ssids) > 0 {
+						networkList := strings.Join(ssids, "\n")
+						scanText.SetText(fmt.Sprintf("Found Networks:\n%s", networkList))
 					} else {
-						scanText.SetText("Scan completed successfully!")
+						scanText.SetText("[red]No networks found.[/red]").
+							SetTextColor(tcell.ColorRed)
 					}
 				})
 			}()
