@@ -106,16 +106,29 @@ func loadSniffingMenu() {
 func loadScanMenu() {
 	buttons = nil
 
-	scanText := tview.NewTextView().
-		SetText("Ready to scan network!")
+	var checkSSID, checkLastSeen bool
 
+	scanText := tview.NewTextView().
+		SetText("Ready to scan network!").
+		SetTextColor(tcell.ColorWhite)
 	scanText.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
+	scannerForm := tview.NewForm().
+		AddCheckbox("SSID", false, func(checked bool) {
+			checkSSID = checked
+		}).
+		AddCheckbox("Last seen", false, func(checked bool) {
+			checkLastSeen = checked
+		})
+	scannerForm.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
 
 	scanButton := tview.NewButton("Start Scan").
 		SetSelectedFunc(func() {
-			var ssids []string
-			scanText.SetText("Scanning for networks...")
+			var ssids, lastSeenList []string
+			scanText.SetText("Scanning for networks...").
+				SetTextColor(tcell.ColorWhite)
 
 			cmd := exec.Command("sudo", "iw", "wlo1", "scan") // CHANGE THIS TO PI INTERFACE
 			stdout, err := cmd.StdoutPipe()
@@ -132,28 +145,55 @@ func loadScanMenu() {
 			// Channel to handle scanning and output to TUI
 			done := make(chan struct{})
 
-			// Scan line by line for "SSID:" and store the value
-			go func() {
-				scanner := bufio.NewScanner(stdout)
-				for scanner.Scan() {
-					line := strings.TrimSpace(scanner.Text())
-					if strings.HasPrefix(line, "SSID:") {
-						ssid := strings.TrimPrefix(line, "SSID:")
-						ssids = append(ssids, strings.TrimSpace(ssid))
+			if checkSSID == true {
+				// Scan line by line for "SSID:" and store the value
+				go func() {
+					scanner := bufio.NewScanner(stdout)
+					for scanner.Scan() {
+						line := strings.TrimSpace(scanner.Text())
+						if strings.HasPrefix(line, "SSID:") {
+							ssid := strings.TrimPrefix(line, "SSID:")
+							ssids = append(ssids, strings.TrimSpace(ssid))
+						}
 					}
-				}
 
-				// Handle potential scanner error
-				if err := scanner.Err(); err != nil {
-					app.QueueUpdateDraw(func() {
-						scanText.SetText(fmt.Sprintf("Error reading output: %v\n", err))
-					})
-					return
-				}
+					// Handle potential scanner error
+					if err := scanner.Err(); err != nil {
+						app.QueueUpdateDraw(func() {
+							scanText.SetText(fmt.Sprintf("Error reading output: %v\n", err))
+						})
+						return
+					}
 
-				// Signal scan completion
-				done <- struct{}{}
-			}()
+					// Signal scan completion
+					done <- struct{}{}
+				}()
+			}
+
+			if checkLastSeen == true {
+				// Scan line by line for "last seen:" and store the value
+				go func() {
+					scanner := bufio.NewScanner(stdout)
+					for scanner.Scan() {
+						line := strings.TrimSpace(scanner.Text())
+						if strings.HasPrefix(line, "last seen:") {
+							lastSeenValue := strings.TrimPrefix(line, "last seen:")
+							lastSeenList = append(lastSeenList, strings.TrimSpace(lastSeenValue))
+						}
+					}
+
+					// Handle potential scanner error
+					if err := scanner.Err(); err != nil {
+						app.QueueUpdateDraw(func() {
+							scanText.SetText(fmt.Sprintf("Error reading output: %v\n", err))
+						})
+						return
+					}
+
+					// Signal scan completion
+					done <- struct{}{}
+				}()
+			}
 
 			//Update TUI with list of SSIDs or an error message if none are found
 			go func() {
@@ -167,7 +207,7 @@ func loadScanMenu() {
 						networkList := strings.Join(ssids, "\n")
 						scanText.SetText(fmt.Sprintf("Found Networks:\n%s", networkList))
 					} else {
-						scanText.SetText("[red]No networks found.[/red]").
+						scanText.SetText("No networks found.").
 							SetTextColor(tcell.ColorRed)
 					}
 				})
@@ -186,6 +226,7 @@ func loadScanMenu() {
 
 	scanFlex := tview.NewFlex().
 		AddItem(scanText, 0, 1, false).
+		AddItem(scannerForm, 0, 1, false).
 		AddItem(scanButton, 0, 1, true).
 		AddItem(backButton, 0, 1, false).
 		SetDirection(tview.FlexRow)
