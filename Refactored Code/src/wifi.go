@@ -114,6 +114,24 @@ func loadScanMenu() {
 	scanText.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
 
+	ssidCheckbox := tview.NewCheckbox().
+		SetLabel("SSID").
+		SetChecked(false).
+		SetChangedFunc(func(checked bool) {
+			checkSSID = checked
+		})
+
+	lastSeenCheckbox := tview.NewCheckbox().
+		SetLabel("Last seen").
+		SetChecked(false).
+		SetChangedFunc(func(checked bool) {
+			checkLastSeen = checked
+		})
+
+	checkFlex := tview.NewFlex().
+		AddItem(ssidCheckbox, 0, 1, false).
+		AddItem(lastSeenCheckbox, 0, 1, false)
+
 	scannerForm := tview.NewForm().
 		AddCheckbox("SSID", false, func(checked bool) {
 			checkSSID = checked
@@ -121,12 +139,13 @@ func loadScanMenu() {
 		AddCheckbox("Last seen", false, func(checked bool) {
 			checkLastSeen = checked
 		})
+
 	scannerForm.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
 
 	scanButton := tview.NewButton("Start Scan").
 		SetSelectedFunc(func() {
-			var ssids, lastSeenList []string
+			var ssids, lastSeenList, networks []string
 			scanText.SetText("Scanning for networks...").
 				SetTextColor(tcell.ColorWhite)
 
@@ -142,7 +161,7 @@ func loadScanMenu() {
 				return
 			}
 
-			// Channel to handle scanning and output to TUI
+			// Channel to handle concurrent scanning and output to TUI
 			done := make(chan struct{})
 
 			if checkSSID == true {
@@ -201,10 +220,25 @@ func loadScanMenu() {
 				// Wait for the scan to finish
 				cmd.Wait()
 
+				for index := range ssids {
+					var thisNetwork string
+					var thisSSID, thisLastSeen string
+
+					if checkSSID && index < len(ssids) {
+						thisSSID = ssids[index]
+					}
+					if checkLastSeen && index < len(lastSeenList) {
+						thisLastSeen = lastSeenList[index]
+					}
+
+					thisNetwork = fmt.Sprintf("%s | %s", thisSSID, thisLastSeen)
+					networks = append(networks, thisNetwork)
+				}
+
 				// Update the scanText with the list of ESSIDs
 				app.QueueUpdateDraw(func() {
-					if len(ssids) > 0 {
-						networkList := strings.Join(ssids, "\n")
+					if len(networks) > 0 {
+						networkList := strings.Join(networks, "\n")
 						scanText.SetText(fmt.Sprintf("Found Networks:\n%s", networkList))
 					} else {
 						scanText.SetText("No networks found.").
@@ -226,7 +260,7 @@ func loadScanMenu() {
 
 	scanFlex := tview.NewFlex().
 		AddItem(scanText, 0, 1, false).
-		AddItem(scannerForm, 0, 1, false).
+		AddItem(checkFlex, 0, 1, false).
 		AddItem(scanButton, 0, 1, true).
 		AddItem(backButton, 0, 1, false).
 		SetDirection(tview.FlexRow)
