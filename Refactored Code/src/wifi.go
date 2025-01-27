@@ -8,6 +8,7 @@ import (
 	"github.com/rivo/tview"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -43,7 +44,7 @@ func loadWifiMenu() {
 		AddItem(backButton, 0, 1, false).
 		SetDirection(tview.FlexRow)
 
-	pages.AddPage("wifi", wifiFlex, true, false) // Add the WiFi page to pages
+	pages.AddPage("wifi", wifiFlex, true, false) // Add the Wi-Fi page to pages
 	buttons = []*tview.Button{sniffButton, scanButton, backButton}
 	enableTabFocus(wifiFlex, buttons)
 }
@@ -54,6 +55,8 @@ func loadSniffingMenu() {
 
 	sniffingText := tview.NewTextView().
 		SetText("Ready to sniff!")
+	sniffingText.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
 
 	sniffButton := tview.NewButton("Start Sniffing").
 		SetSelectedFunc(func() {
@@ -69,14 +72,18 @@ func loadSniffingMenu() {
 				return
 			}
 
+			sniffingText.SetText("Sniffing in progress")
+
 			// Go function that waits for the process to finish and updates the text view
 			go func() {
 				err := cmd.Wait()
 				app.QueueUpdateDraw(func() {
 					if err != nil {
-						sniffingText.SetText(fmt.Sprintf("Command finished with error: %v\n", err))
+						sniffingText.SetText(fmt.Sprintf("Command finished with error: %v\n", err)).
+							SetTextColor(tcell.ColorRed)
 					} else {
-						sniffingText.SetText("Sniffing completed successfully!")
+						sniffingText.SetText("Sniffing completed successfully!").
+							SetTextColor(tcell.ColorGreen)
 					}
 				})
 			}()
@@ -93,7 +100,7 @@ func loadSniffingMenu() {
 		SetBorderColor(tcell.ColorWhite)
 
 	sniffFlex := tview.NewFlex().
-		AddItem(sniffingText, 0, 1, false).
+		AddItem(sniffingText, 0, 3, false).
 		AddItem(sniffButton, 0, 1, true).
 		AddItem(backButton, 0, 1, false).
 		SetDirection(tview.FlexRow)
@@ -105,8 +112,7 @@ func loadSniffingMenu() {
 
 func loadScanMenu() {
 	buttons = nil
-
-	var checkSSID, checkLastSeen bool
+	var checkESSID, checkAddress, checkProtocol bool
 
 	scanText := tview.NewTextView().
 		SetText("Ready to scan network!").
@@ -118,38 +124,37 @@ func loadScanMenu() {
 		SetLabel("SSID").
 		SetChecked(false).
 		SetChangedFunc(func(checked bool) {
-			checkSSID = checked
+			checkESSID = checked
 		})
 
-	lastSeenCheckbox := tview.NewCheckbox().
-		SetLabel("Last seen").
+	addressCheckbox := tview.NewCheckbox().
+		SetLabel("Address").
 		SetChecked(false).
 		SetChangedFunc(func(checked bool) {
-			checkLastSeen = checked
+			checkAddress = checked
+		})
+
+	protocolCheckbox := tview.NewCheckbox().
+		SetLabel("Protocol").
+		SetChecked(false).
+		SetChangedFunc(func(checked bool) {
+			checkProtocol = checked
 		})
 
 	checkFlex := tview.NewFlex().
 		AddItem(ssidCheckbox, 0, 1, false).
-		AddItem(lastSeenCheckbox, 0, 1, false)
-
-	scannerForm := tview.NewForm().
-		AddCheckbox("SSID", false, func(checked bool) {
-			checkSSID = checked
-		}).
-		AddCheckbox("Last seen", false, func(checked bool) {
-			checkLastSeen = checked
-		})
-
-	scannerForm.SetBorder(true).
-		SetBorderColor(tcell.ColorWhite)
+		AddItem(addressCheckbox, 0, 1, false).
+		AddItem(protocolCheckbox, 0, 1, false)
 
 	scanButton := tview.NewButton("Start Scan").
 		SetSelectedFunc(func() {
-			var ssids, lastSeenList, networks []string
+			var essidList, addressList, protocolList, networks []string
+			var wg sync.WaitGroup
+
 			scanText.SetText("Scanning for networks...").
 				SetTextColor(tcell.ColorWhite)
 
-			cmd := exec.Command("sudo", "iw", "wlo1", "scan") // CHANGE THIS TO PI INTERFACE
+			cmd := exec.Command("sudo", "iwlist", "wlo1", "scan") // CHANGE THIS TO PI INTERFACE
 			stdout, err := cmd.StdoutPipe()
 			if err != nil {
 				scanText.SetText(fmt.Sprintf("Failed to create pipe: %v\n", err))
@@ -161,18 +166,17 @@ func loadScanMenu() {
 				return
 			}
 
-			// Channel to handle concurrent scanning and output to TUI
-			done := make(chan struct{})
-
-			if checkSSID == true {
+			if checkESSID == true {
 				// Scan line by line for "SSID:" and store the value
+				wg.Add(1)
 				go func() {
+					defer wg.Done()
 					scanner := bufio.NewScanner(stdout)
 					for scanner.Scan() {
 						line := strings.TrimSpace(scanner.Text())
-						if strings.HasPrefix(line, "SSID:") {
-							ssid := strings.TrimPrefix(line, "SSID:")
-							ssids = append(ssids, strings.TrimSpace(ssid))
+						if strings.HasPrefix(line, "ESSID:") {
+							essid := strings.TrimPrefix(line, "ESSID:")
+							essidList = append(essidList, strings.TrimSpace(essid))
 						}
 					}
 
@@ -183,21 +187,20 @@ func loadScanMenu() {
 						})
 						return
 					}
-
-					// Signal scan completion
-					done <- struct{}{}
 				}()
 			}
 
-			if checkLastSeen == true {
-				// Scan line by line for "last seen:" and store the value
+			if checkAddress == true {
+				wg.Add(1)
+				// Scan line by line for "Address:" and store the value
 				go func() {
+					defer wg.Done()
 					scanner := bufio.NewScanner(stdout)
 					for scanner.Scan() {
 						line := strings.TrimSpace(scanner.Text())
-						if strings.HasPrefix(line, "last seen:") {
-							lastSeenValue := strings.TrimPrefix(line, "last seen:")
-							lastSeenList = append(lastSeenList, strings.TrimSpace(lastSeenValue))
+						if strings.HasPrefix(line, "Address:") {
+							addressValue := strings.TrimPrefix(line, "Address:")
+							addressList = append(addressList, strings.TrimSpace(addressValue))
 						}
 					}
 
@@ -208,30 +211,62 @@ func loadScanMenu() {
 						})
 						return
 					}
+				}()
+			}
 
-					// Signal scan completion
-					done <- struct{}{}
+			if checkProtocol == true {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					scanner := bufio.NewScanner(stdout)
+					for scanner.Scan() {
+						line := strings.TrimSpace(scanner.Text())
+						if strings.HasPrefix(line, "Protocol: ") {
+							addressValue := strings.TrimPrefix(line, "Protocol: ")
+							addressList = append(addressList, strings.TrimSpace(addressValue))
+						}
+					}
+
+					// Handle potential scanner error
+					if err := scanner.Err(); err != nil {
+						app.QueueUpdateDraw(func() {
+							scanText.SetText(fmt.Sprintf("Error reading output: %v\n", err))
+						})
+						return
+					}
 				}()
 			}
 
 			//Update TUI with list of SSIDs or an error message if none are found
 			go func() {
-				<-done
+				wg.Wait()
 				// Wait for the scan to finish
-				cmd.Wait()
+				err := cmd.Wait()
+				if err != nil {
+					return
+				}
 
-				for index := range ssids {
+				maxLength := len(essidList)
+
+				if len(addressList) > maxLength {
+					maxLength = len(addressList)
+				}
+
+				for index := range maxLength {
 					var thisNetwork string
-					var thisSSID, thisLastSeen string
+					var thisESSID, thisAddress, thisProtocol string
 
-					if checkSSID && index < len(ssids) {
-						thisSSID = ssids[index]
+					if checkESSID && index < maxLength-1 {
+						thisESSID = essidList[index]
 					}
-					if checkLastSeen && index < len(lastSeenList) {
-						thisLastSeen = lastSeenList[index]
+					if checkAddress && index < maxLength-1 {
+						thisAddress = addressList[index]
+					}
+					if checkProtocol && index < maxLength-1 {
+						thisProtocol = protocolList[index]
 					}
 
-					thisNetwork = fmt.Sprintf("%s | %s", thisSSID, thisLastSeen)
+					thisNetwork = fmt.Sprintf("%s | %s | %s", thisESSID, thisAddress, thisProtocol)
 					networks = append(networks, thisNetwork)
 				}
 
@@ -259,7 +294,7 @@ func loadScanMenu() {
 		SetBorderColor(tcell.ColorWhite)
 
 	scanFlex := tview.NewFlex().
-		AddItem(scanText, 0, 1, false).
+		AddItem(scanText, 0, 3, false).
 		AddItem(checkFlex, 0, 1, false).
 		AddItem(scanButton, 0, 1, true).
 		AddItem(backButton, 0, 1, false).

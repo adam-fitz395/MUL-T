@@ -10,7 +10,7 @@ func loadIRMenu() {
 
 	scanButton := tview.NewButton("Scan").
 		SetSelectedFunc(func() {
-
+			pages.SwitchToPage("irscan")
 		})
 
 	backButton := tview.NewButton("Back").
