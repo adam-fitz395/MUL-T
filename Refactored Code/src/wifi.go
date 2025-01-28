@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 	"os/exec"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
 // Function that loads wi-fi sub-menu
@@ -148,7 +149,7 @@ func loadScanMenu() {
 
 	scanButton := tview.NewButton("Start Scan").
 		SetSelectedFunc(func() {
-			var essidList, addressList, protocolList, networks []string
+			var essidList, addressList, protocolList, networks, lines []string
 			var wg sync.WaitGroup
 
 			scanText.SetText("Scanning for networks...").
@@ -166,14 +167,19 @@ func loadScanMenu() {
 				return
 			}
 
-			if checkESSID == true {
+			scanner := bufio.NewScanner(stdout)
+			for scanner.Scan() {
+				line := strings.TrimSpace(scanner.Text())
+				lines = append(lines, line)
+			}
+
+			if checkESSID {
 				// Scan line by line for "SSID:" and store the value
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
 					scanner := bufio.NewScanner(stdout)
-					for scanner.Scan() {
-						line := strings.TrimSpace(scanner.Text())
+					for _, line := range lines {
 						if strings.HasPrefix(line, "ESSID:") {
 							essid := strings.TrimPrefix(line, "ESSID:")
 							essidList = append(essidList, strings.TrimSpace(essid))
@@ -190,14 +196,12 @@ func loadScanMenu() {
 				}()
 			}
 
-			if checkAddress == true {
+			if checkAddress {
 				wg.Add(1)
 				// Scan line by line for "Address:" and store the value
 				go func() {
 					defer wg.Done()
-					scanner := bufio.NewScanner(stdout)
-					for scanner.Scan() {
-						line := strings.TrimSpace(scanner.Text())
+					for _, line := range lines {
 						if strings.HasPrefix(line, "Address:") {
 							addressValue := strings.TrimPrefix(line, "Address:")
 							addressList = append(addressList, strings.TrimSpace(addressValue))
@@ -214,15 +218,13 @@ func loadScanMenu() {
 				}()
 			}
 
-			if checkProtocol == true {
+			if checkProtocol {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					scanner := bufio.NewScanner(stdout)
-					for scanner.Scan() {
-						line := strings.TrimSpace(scanner.Text())
-						if strings.HasPrefix(line, "Protocol: ") {
-							addressValue := strings.TrimPrefix(line, "Protocol: ")
+					for _, line := range lines {
+						if strings.HasPrefix(line, "Protocol:") {
+							addressValue := strings.TrimPrefix(line, "Protocol:")
 							addressList = append(addressList, strings.TrimSpace(addressValue))
 						}
 					}
@@ -243,6 +245,7 @@ func loadScanMenu() {
 				// Wait for the scan to finish
 				err := cmd.Wait()
 				if err != nil {
+
 					return
 				}
 
@@ -251,22 +254,24 @@ func loadScanMenu() {
 				if len(addressList) > maxLength {
 					maxLength = len(addressList)
 				}
+				if len(protocolList) > maxLength {
+					maxLength = len(protocolList)
+				}
 
-				for index := range maxLength {
-					var thisNetwork string
+				for index := 0; index < maxLength; index++ {
 					var thisESSID, thisAddress, thisProtocol string
 
-					if checkESSID && index < maxLength-1 {
+					if checkESSID && index < len(essidList) {
 						thisESSID = essidList[index]
 					}
-					if checkAddress && index < maxLength-1 {
+					if checkAddress && index < len(addressList) {
 						thisAddress = addressList[index]
 					}
-					if checkProtocol && index < maxLength-1 {
+					if checkProtocol && index < len(protocolList) {
 						thisProtocol = protocolList[index]
 					}
 
-					thisNetwork = fmt.Sprintf("%s | %s | %s", thisESSID, thisAddress, thisProtocol)
+					thisNetwork := fmt.Sprintf("%s | %s | %s", thisESSID, thisAddress, thisProtocol)
 					networks = append(networks, thisNetwork)
 				}
 
