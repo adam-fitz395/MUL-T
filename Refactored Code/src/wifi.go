@@ -113,7 +113,7 @@ func loadSniffingMenu() {
 
 func loadScanMenu() {
 	buttons = nil
-	var checkESSID, checkAddress, checkProtocol bool
+	var checkESSID, checkAddress, checkProtocol, checkFreq bool
 
 	scanText := tview.NewTextView().
 		SetText("Ready to scan network!").
@@ -142,14 +142,22 @@ func loadScanMenu() {
 			checkProtocol = checked
 		})
 
+	frequencyCheckbox := tview.NewCheckbox().
+		SetLabel("Frequency").
+		SetChecked(false).
+		SetChangedFunc(func(checked bool) {
+			checkFreq = checked
+		})
+
 	checkFlex := tview.NewFlex().
 		AddItem(ssidCheckbox, 0, 1, false).
 		AddItem(addressCheckbox, 0, 1, false).
-		AddItem(protocolCheckbox, 0, 1, false)
+		AddItem(protocolCheckbox, 0, 1, false).
+		AddItem(frequencyCheckbox, 0, 1, false)
 
 	scanButton := tview.NewButton("Start Scan").
 		SetSelectedFunc(func() {
-			var essidList, addressList, protocolList, networks, lines []string
+			var essidList, addressList, protocolList, frequencyList, networks, lines []string
 			var wg sync.WaitGroup
 
 			scanText.SetText("Scanning for networks...").
@@ -168,6 +176,7 @@ func loadScanMenu() {
 			}
 
 			scanner := bufio.NewScanner(stdout)
+
 			for scanner.Scan() {
 				line := strings.TrimSpace(scanner.Text())
 				lines = append(lines, line)
@@ -178,20 +187,11 @@ func loadScanMenu() {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					scanner := bufio.NewScanner(stdout)
 					for _, line := range lines {
 						if strings.HasPrefix(line, "ESSID:") {
 							essid := strings.TrimPrefix(line, "ESSID:")
 							essidList = append(essidList, strings.TrimSpace(essid))
 						}
-					}
-
-					// Handle potential scanner error
-					if err := scanner.Err(); err != nil {
-						app.QueueUpdateDraw(func() {
-							scanText.SetText(fmt.Sprintf("Error reading output: %v\n", err))
-						})
-						return
 					}
 				}()
 			}
@@ -202,18 +202,16 @@ func loadScanMenu() {
 				go func() {
 					defer wg.Done()
 					for _, line := range lines {
-						if strings.HasPrefix(line, "Address:") {
-							addressValue := strings.TrimPrefix(line, "Address:")
-							addressList = append(addressList, strings.TrimSpace(addressValue))
+						if strings.HasPrefix(line, "Cell ") {
+							// Split the line at "Address: " to get the MAC address
+							parts := strings.Split(line, "Address: ")
+							if len(parts) > 1 {
+								addressValue := strings.TrimSpace(parts[1])
+								// Handle cases where there might be extra text after the MAC address
+								addressValue = strings.Split(addressValue, " ")[0]
+								addressList = append(addressList, addressValue)
+							}
 						}
-					}
-
-					// Handle potential scanner error
-					if err := scanner.Err(); err != nil {
-						app.QueueUpdateDraw(func() {
-							scanText.SetText(fmt.Sprintf("Error reading output: %v\n", err))
-						})
-						return
 					}
 				}()
 			}
@@ -224,19 +222,22 @@ func loadScanMenu() {
 					defer wg.Done()
 					for _, line := range lines {
 						if strings.HasPrefix(line, "Protocol:") {
-							addressValue := strings.TrimPrefix(line, "Protocol:")
-							addressList = append(addressList, strings.TrimSpace(addressValue))
+							protocolValue := strings.TrimPrefix(line, "Protocol:")
+							protocolList = append(protocolList, strings.TrimSpace(protocolValue))
 						}
 					}
-
-					// Handle potential scanner error
-					if err := scanner.Err(); err != nil {
-						app.QueueUpdateDraw(func() {
-							scanText.SetText(fmt.Sprintf("Error reading output: %v\n", err))
-						})
-						return
-					}
 				}()
+			}
+
+			if checkFreq {
+				wg.Add(1)
+				defer wg.Done()
+				for _, line := range lines {
+					if strings.HasPrefix(line, "Frequency:") {
+						frequencyValue := strings.TrimPrefix(line, "Frequency:")
+						frequencyList = append(frequencyList, strings.TrimSpace(frequencyValue))
+					}
+				}
 			}
 
 			//Update TUI with list of SSIDs or an error message if none are found
@@ -259,7 +260,7 @@ func loadScanMenu() {
 				}
 
 				for index := 0; index < maxLength; index++ {
-					var thisESSID, thisAddress, thisProtocol string
+					var thisESSID, thisAddress, thisProtocol, thisFrequency string
 
 					if checkESSID && index < len(essidList) {
 						thisESSID = essidList[index]
@@ -271,7 +272,11 @@ func loadScanMenu() {
 						thisProtocol = protocolList[index]
 					}
 
-					thisNetwork := fmt.Sprintf("%s | %s | %s", thisESSID, thisAddress, thisProtocol)
+					if checkFreq && index < len(frequencyList) {
+						thisFrequency = frequencyList[index]
+					}
+
+					thisNetwork := fmt.Sprintf("%s | %s | %s | %s", thisESSID, thisAddress, thisProtocol, thisFrequency)
 					networks = append(networks, thisNetwork)
 				}
 
