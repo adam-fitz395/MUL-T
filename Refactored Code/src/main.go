@@ -35,6 +35,7 @@ func instantiateMenus() {
 	loadSniffingMenu()
 	loadScanMenu()
 	loadBluetoothMenu()
+	loadBluetoothScan()
 	loadIRMenu()
 }
 

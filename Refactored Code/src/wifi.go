@@ -55,7 +55,9 @@ func loadSniffingMenu() {
 	buttons = nil
 
 	sniffingText := tview.NewTextView().
-		SetText("Ready to sniff!")
+		SetDynamicColors(true).
+		SetText("[green]Ready to sniff![green]")
+
 	sniffingText.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
 
@@ -69,7 +71,7 @@ func loadSniffingMenu() {
 
 			// Start the sniffing process
 			if err := cmd.Start(); err != nil {
-				sniffingText.SetText(fmt.Sprintf("Error starting command: %v\n", err))
+				sniffingText.SetText(fmt.Sprintf("[red]Error starting command: %v\n[red]", err))
 				return
 			}
 
@@ -80,7 +82,7 @@ func loadSniffingMenu() {
 				err := cmd.Wait()
 				app.QueueUpdateDraw(func() {
 					if err != nil {
-						sniffingText.SetText(fmt.Sprintf("Command finished with error: %v\n", err)).
+						sniffingText.SetText(fmt.Sprintf("[red]Command finished with error: %v\n[red]", err)).
 							SetTextColor(tcell.ColorRed)
 					} else {
 						sniffingText.SetText("Sniffing completed successfully!").
@@ -116,8 +118,10 @@ func loadScanMenu() {
 	var checkESSID, checkAddress, checkProtocol, checkFreq bool
 
 	scanText := tview.NewTextView().
-		SetText("Ready to scan network!").
+		SetDynamicColors(true).
+		SetText("[green]Ready to scan network![green]").
 		SetTextColor(tcell.ColorWhite)
+
 	scanText.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
 
@@ -166,12 +170,12 @@ func loadScanMenu() {
 			cmd := exec.Command("sudo", "iwlist", "wlo1", "scan") // CHANGE THIS TO PI INTERFACE
 			stdout, err := cmd.StdoutPipe()
 			if err != nil {
-				scanText.SetText(fmt.Sprintf("Failed to create pipe: %v\n", err))
+				scanText.SetText(fmt.Sprintf("[red]Failed to create pipe: %v\n[red]", err))
 				return
 			}
 
 			if err := cmd.Start(); err != nil {
-				scanText.SetText(fmt.Sprintf("Error starting command: %v\n", err))
+				scanText.SetText(fmt.Sprintf("[red]Error starting command: %v\n[red]", err))
 				return
 			}
 
@@ -286,8 +290,7 @@ func loadScanMenu() {
 						networkList := strings.Join(networks, "\n")
 						scanText.SetText(fmt.Sprintf("Found Networks:\n%s", networkList))
 					} else {
-						scanText.SetText("No networks found.").
-							SetTextColor(tcell.ColorRed)
+						scanText.SetText("[red]No networks found.[red]")
 					}
 				})
 			}()
@@ -310,7 +313,7 @@ func loadScanMenu() {
 		AddItem(backButton, 0, 1, false).
 		SetDirection(tview.FlexRow)
 
-	buttons = append(buttons, scanButton, backButton)
+	buttons = []*tview.Button{scanButton, backButton}
 	pages.AddPage("scan", scanFlex, true, false)
 	enableTabFocus(scanFlex, buttons)
 }
