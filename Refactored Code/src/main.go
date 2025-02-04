@@ -34,6 +34,7 @@ func instantiateMenus() {
 	loadWifiMenu()
 	loadSniffingMenu()
 	loadScanMenu()
+	loadBluetoothMenu()
 	loadIRMenu()
 }
 
@@ -51,6 +52,14 @@ func loadMainMenu() {
 
 	wifiButton.SetBackgroundColorActivated(tcell.ColorGreen).
 		SetLabelColorActivated(tcell.ColorWhite)
+
+	bluetoothButton := tview.NewButton("Bluetooth").
+		SetSelectedFunc(func() {
+			pages.SwitchToPage("bluetooth")
+		})
+
+	bluetoothButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
 
 	IRButton := tview.NewButton("Infrared").
 		SetSelectedFunc(func() {
@@ -84,12 +93,13 @@ func loadMainMenu() {
 
 	mainFlex := tview.NewFlex().
 		AddItem(wifiButton, 0, 1, true).
+		AddItem(bluetoothButton, 0, 1, true).
 		AddItem(IRButton, 0, 1, false).
 		AddItem(NFCButton, 0, 1, false).
 		AddItem(exitButton, 0, 1, false).
 		SetDirection(tview.FlexRow)
 
-	buttons = []*tview.Button{wifiButton, IRButton, NFCButton, exitButton}
+	buttons = []*tview.Button{wifiButton, bluetoothButton, IRButton, NFCButton, exitButton}
 	pages.AddPage("main", mainFlex, true, true) // Add the main page to pages
 	enableTabFocus(mainFlex, buttons)
 }
