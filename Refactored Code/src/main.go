@@ -47,10 +47,8 @@ func loadMainMenu() {
 		SetSelectedFunc(func() {
 			pages.SwitchToPage("wifi") // Switch to the Wi-Fi page
 		})
-
 	wifiButton.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
-
 	wifiButton.SetBackgroundColorActivated(tcell.ColorGreen).
 		SetLabelColorActivated(tcell.ColorWhite)
 
@@ -58,15 +56,14 @@ func loadMainMenu() {
 		SetSelectedFunc(func() {
 			pages.SwitchToPage("bluetooth")
 		})
-
 	bluetoothButton.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
+	bluetoothButton.SetBackgroundColorActivated(tcell.ColorDarkBlue)
 
 	IRButton := tview.NewButton("Infrared").
 		SetSelectedFunc(func() {
 			pages.SwitchToPage("infrared")
 		})
-
 	IRButton.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
 	IRButton.SetBackgroundColorActivated(tcell.ColorRed).
@@ -78,7 +75,6 @@ func loadMainMenu() {
 			app.Stop()
 			UIDScan()
 		})
-
 	NFCButton.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
 	NFCButton.SetBackgroundColorActivated(tcell.ColorBlueViolet).
@@ -88,7 +84,6 @@ func loadMainMenu() {
 		SetSelectedFunc(func() {
 			app.Stop() // Exit the application
 		})
-
 	exitButton.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
 

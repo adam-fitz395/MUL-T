@@ -164,8 +164,7 @@ func loadScanMenu() {
 			var essidList, addressList, protocolList, frequencyList, networks, lines []string
 			var wg sync.WaitGroup
 
-			scanText.SetText("Scanning for networks...").
-				SetTextColor(tcell.ColorWhite)
+			scanText.SetText("[white]Scanning for networks...")
 
 			cmd := exec.Command("sudo", "iwlist", "wlo1", "scan") // CHANGE THIS TO PI INTERFACE
 			stdout, err := cmd.StdoutPipe()

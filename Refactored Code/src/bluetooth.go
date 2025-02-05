@@ -1,8 +1,13 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"os/exec"
+	"strings"
+	"time"
 )
 
 func loadBluetoothMenu() {
@@ -36,13 +41,36 @@ func loadBluetoothScan() {
 	buttons = nil
 	btScanText := tview.NewTextView().
 		SetDynamicColors(true).
-		SetText("Ready to Scan!")
+		SetText("[green]Ready to Scan!")
 
 	btScanText.SetBorder(true)
 
 	btScanButton := tview.NewButton("Scan").
 		SetSelectedFunc(func() {
-			//TODO Add Scanning func
+			var lines []string
+			btScanText.SetText("Scanning for Bluetooth Devices...")
+
+			cmd := exec.Command("sudo", "bluetoothctl", "--", "scan", "on")
+			time.Sleep(5 * time.Second)
+			stdout, err := cmd.StdoutPipe()
+			if err != nil {
+				btScanText.SetText(fmt.Sprintf("[red]Failed to create pipe: %v\n[red]", err))
+				return
+			}
+
+			if err := cmd.Start(); err != nil {
+				btScanText.SetText(fmt.Sprintf("[red]Error starting command: %v\n[red]", err))
+				return
+			}
+
+			scanner := bufio.NewScanner(stdout)
+
+			for scanner.Scan() {
+				line := strings.TrimSpace(scanner.Text())
+				lines = append(lines, line)
+			}
+
+			//TODO: Display bluetooth device information
 		})
 
 	backButton := tview.NewButton("Back").SetSelectedFunc(func() {
