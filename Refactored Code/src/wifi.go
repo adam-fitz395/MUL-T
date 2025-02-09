@@ -166,132 +166,134 @@ func loadScanMenu() {
 
 			scanText.SetText("[white]Scanning for networks...")
 
-			cmd := exec.Command("sudo", "iwlist", "wlo1", "scan") // CHANGE THIS TO PI INTERFACE
-			stdout, err := cmd.StdoutPipe()
-			if err != nil {
-				scanText.SetText(fmt.Sprintf("[red]Failed to create pipe: %v\n[red]", err))
-				return
-			}
-
-			if err := cmd.Start(); err != nil {
-				scanText.SetText(fmt.Sprintf("[red]Error starting command: %v\n[red]", err))
-				return
-			}
-
-			scanner := bufio.NewScanner(stdout)
-
-			for scanner.Scan() {
-				line := strings.TrimSpace(scanner.Text())
-				lines = append(lines, line)
-			}
-
-			if checkESSID {
-				// Scan line by line for "SSID:" and store the value
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					for _, line := range lines {
-						if strings.HasPrefix(line, "ESSID:") {
-							essid := strings.TrimPrefix(line, "ESSID:")
-							essidList = append(essidList, strings.TrimSpace(essid))
-						}
-					}
-				}()
-			}
-
-			if checkAddress {
-				wg.Add(1)
-				// Scan line by line for "Address:" and store the value
-				go func() {
-					defer wg.Done()
-					for _, line := range lines {
-						if strings.HasPrefix(line, "Cell ") {
-							// Split the line at "Address: " to get the MAC address
-							parts := strings.Split(line, "Address: ")
-							if len(parts) > 1 {
-								addressValue := strings.TrimSpace(parts[1])
-								// Handle cases where there might be extra text after the MAC address
-								addressValue = strings.Split(addressValue, " ")[0]
-								addressList = append(addressList, addressValue)
-							}
-						}
-					}
-				}()
-			}
-
-			if checkProtocol {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					for _, line := range lines {
-						if strings.HasPrefix(line, "Protocol:") {
-							protocolValue := strings.TrimPrefix(line, "Protocol:")
-							protocolList = append(protocolList, strings.TrimSpace(protocolValue))
-						}
-					}
-				}()
-			}
-
-			if checkFreq {
-				wg.Add(1)
-				defer wg.Done()
-				for _, line := range lines {
-					if strings.HasPrefix(line, "Frequency:") {
-						frequencyValue := strings.TrimPrefix(line, "Frequency:")
-						frequencyList = append(frequencyList, strings.TrimSpace(frequencyValue))
-					}
-				}
-			}
-
-			//Update TUI with list of SSIDs or an error message if none are found
 			go func() {
-				wg.Wait()
-				// Wait for the scan to finish
-				err := cmd.Wait()
+				cmd := exec.Command("sudo", "iwlist", "wlo1", "scan") // CHANGE THIS TO PI INTERFACE
+				stdout, err := cmd.StdoutPipe()
 				if err != nil {
-
+					scanText.SetText(fmt.Sprintf("[red]Failed to create pipe: %v\n[red]", err))
 					return
 				}
 
-				maxLength := len(essidList)
-
-				if len(addressList) > maxLength {
-					maxLength = len(addressList)
-				}
-				if len(protocolList) > maxLength {
-					maxLength = len(protocolList)
+				if err := cmd.Start(); err != nil {
+					scanText.SetText(fmt.Sprintf("[red]Error starting command: %v\n[red]", err))
+					return
 				}
 
-				for index := 0; index < maxLength; index++ {
-					var thisESSID, thisAddress, thisProtocol, thisFrequency string
+				scanner := bufio.NewScanner(stdout)
 
-					if checkESSID && index < len(essidList) {
-						thisESSID = essidList[index]
-					}
-					if checkAddress && index < len(addressList) {
-						thisAddress = addressList[index]
-					}
-					if checkProtocol && index < len(protocolList) {
-						thisProtocol = protocolList[index]
-					}
-
-					if checkFreq && index < len(frequencyList) {
-						thisFrequency = frequencyList[index]
-					}
-
-					thisNetwork := fmt.Sprintf("%s | %s | %s | %s", thisESSID, thisAddress, thisProtocol, thisFrequency)
-					networks = append(networks, thisNetwork)
+				for scanner.Scan() {
+					line := strings.TrimSpace(scanner.Text())
+					lines = append(lines, line)
 				}
 
-				// Update the scanText with the list of ESSIDs
-				app.QueueUpdateDraw(func() {
-					if len(networks) > 0 {
-						networkList := strings.Join(networks, "\n")
-						scanText.SetText(fmt.Sprintf("Found Networks:\n%s", networkList))
-					} else {
-						scanText.SetText("[red]No networks found.[red]")
+				if checkESSID {
+					// Scan line by line for "SSID:" and store the value
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						for _, line := range lines {
+							if strings.HasPrefix(line, "ESSID:") {
+								essid := strings.TrimPrefix(line, "ESSID:")
+								essidList = append(essidList, strings.TrimSpace(essid))
+							}
+						}
+					}()
+				}
+
+				if checkAddress {
+					wg.Add(1)
+					// Scan line by line for "Address:" and store the value
+					go func() {
+						defer wg.Done()
+						for _, line := range lines {
+							if strings.HasPrefix(line, "Cell ") {
+								// Split the line at "Address: " to get the MAC address
+								parts := strings.Split(line, "Address: ")
+								if len(parts) > 1 {
+									addressValue := strings.TrimSpace(parts[1])
+									// Handle cases where there might be extra text after the MAC address
+									addressValue = strings.Split(addressValue, " ")[0]
+									addressList = append(addressList, addressValue)
+								}
+							}
+						}
+					}()
+				}
+
+				if checkProtocol {
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						for _, line := range lines {
+							if strings.HasPrefix(line, "Protocol:") {
+								protocolValue := strings.TrimPrefix(line, "Protocol:")
+								protocolList = append(protocolList, strings.TrimSpace(protocolValue))
+							}
+						}
+					}()
+				}
+
+				if checkFreq {
+					wg.Add(1)
+					defer wg.Done()
+					for _, line := range lines {
+						if strings.HasPrefix(line, "Frequency:") {
+							frequencyValue := strings.TrimPrefix(line, "Frequency:")
+							frequencyList = append(frequencyList, strings.TrimSpace(frequencyValue))
+						}
 					}
-				})
+				}
+
+				//Update TUI with list of SSIDs or an error message if none are found
+				go func() {
+					wg.Wait()
+					// Wait for the scan to finish
+					err := cmd.Wait()
+					if err != nil {
+
+						return
+					}
+
+					maxLength := len(essidList)
+
+					if len(addressList) > maxLength {
+						maxLength = len(addressList)
+					}
+					if len(protocolList) > maxLength {
+						maxLength = len(protocolList)
+					}
+
+					for index := 0; index < maxLength; index++ {
+						var thisESSID, thisAddress, thisProtocol, thisFrequency string
+
+						if checkESSID && index < len(essidList) {
+							thisESSID = essidList[index]
+						}
+						if checkAddress && index < len(addressList) {
+							thisAddress = addressList[index]
+						}
+						if checkProtocol && index < len(protocolList) {
+							thisProtocol = protocolList[index]
+						}
+
+						if checkFreq && index < len(frequencyList) {
+							thisFrequency = frequencyList[index]
+						}
+
+						thisNetwork := fmt.Sprintf("%s | %s | %s | %s", thisESSID, thisAddress, thisProtocol, thisFrequency)
+						networks = append(networks, thisNetwork)
+					}
+
+					// Update the scanText with the list of ESSIDs
+					app.QueueUpdateDraw(func() {
+						if len(networks) > 0 {
+							networkList := strings.Join(networks, "\n")
+							scanText.SetText(fmt.Sprintf("Found Networks:\n%s", networkList))
+						} else {
+							scanText.SetText("[red]No networks found.[red]")
+						}
+					})
+				}()
 			}()
 		})
 

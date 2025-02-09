@@ -43,7 +43,7 @@ func instantiateMenus() {
 func loadMainMenu() {
 	buttons = nil // Set buttons to nil to clear buttons from previous menu
 
-	wifiButton := tview.NewButton("Wi-Fi Menu").
+	wifiButton := tview.NewButton("Wi-Fi").
 		SetSelectedFunc(func() {
 			pages.SwitchToPage("wifi") // Switch to the Wi-Fi page
 		})
@@ -58,7 +58,8 @@ func loadMainMenu() {
 		})
 	bluetoothButton.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
-	bluetoothButton.SetBackgroundColorActivated(tcell.ColorDarkBlue)
+	bluetoothButton.SetBackgroundColorActivated(tcell.ColorDarkBlue).
+		SetLabelColorActivated(tcell.ColorWhite)
 
 	IRButton := tview.NewButton("Infrared").
 		SetSelectedFunc(func() {
