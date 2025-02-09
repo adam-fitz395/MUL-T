@@ -65,7 +65,7 @@ func loadSniffingMenu() {
 		SetSelectedFunc(func() {
 			logFileName := fmt.Sprintf("sniff_log_%d.pcap", time.Now().Unix())
 
-			cmd := exec.Command("sudo", "ettercap", "-T", "-w", logFileName, "-i", "wlo1")
+			cmd := exec.Command("sudo", "ettercap", "-T", "-w", logFileName, "-i", "wlo1") //TODO: Make sniff exit gracefully
 			stderr := &bytes.Buffer{}
 			cmd.Stderr = stderr
 

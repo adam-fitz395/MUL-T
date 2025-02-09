@@ -5,8 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a17d543e-b352-4ea2-a102-85a853f4fd25" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bluetooth.go" beforeDir="false" afterPath="$PROJECT_DIR$/bluetooth.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/wifi.go" beforeDir="false" afterPath="$PROJECT_DIR$/wifi.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
