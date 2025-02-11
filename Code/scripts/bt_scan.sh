@@ -4,12 +4,14 @@
 TIMESTAMP=$(date +%s)
 LOG_FILE="/home/adamfitz395/Documents/GitHub/MultiTool-Project/Code/logfiles/btlogs/bluetooth_scan_$TIMESTAMP.log"
 
-# Ensure the destination directory exists.
+# Ensure the directory for logfile exists.
 mkdir -p "$(dirname "$LOG_FILE")"
 touch "$LOG_FILE"
 
 # Create a temporary file to store the hcitool output.
 TMP_LOG=$(mktemp)
+
+DURATION=$1
 
 # Restart Bluetooth to ensure no errors occur
 echo "Starting Bluetooth scan..."
@@ -21,10 +23,10 @@ sudo hcitool lescan > "$TMP_LOG" 2>&1 &
 
 SCAN_PID=$!  # Get the process ID of hcitool lescan
 
-# Start a background process that waits 10 seconds, then sends SIGINT
-( sleep 10; sudo kill -SIGINT "$SCAN_PID" ) &
+# Start a background process that waits x seconds, then sends signal to interrupt
+( sleep "$DURATION"; sudo kill -SIGINT "$SCAN_PID" ) &
 
-echo "Scanning for 10 seconds..."
+echo "Scanning for $DURATION seconds..."
 wait "$SCAN_PID"  # Wait for hcitool lescan to stop
 
 echo "Processing discovered devices..."

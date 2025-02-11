@@ -39,11 +39,28 @@ func loadBluetoothMenu() {
 
 func loadBluetoothScan() {
 	buttons = nil
+	var duration int
 	btScanText := tview.NewTextView().
 		SetDynamicColors(true).
 		SetText("[green]Ready to Scan!")
 
 	btScanText.SetBorder(true)
+
+	btScanDuration := tview.NewDropDown().SetLabel("Duration (Seconds): ").SetLabelColor(tcell.ColorWhite)
+	btScanDuration.
+		AddOption("10",
+			func() {
+				duration = 10
+			}).
+		AddOption("20", func() {
+			duration = 20
+		}).
+		AddOption("30", func() {
+			duration = 30
+		}).AddOption("60", func() {
+		duration = 60
+	})
+	btScanDuration.SetCurrentOption(0)
 
 	btScanButton := tview.NewButton("Scan").
 		SetSelectedFunc(func() {
@@ -52,7 +69,7 @@ func loadBluetoothScan() {
 				var devices []string
 
 				// Run bash script with bluetoothctl scan
-				cmd := exec.Command("bash", "../scripts/bt_scan.sh")
+				cmd := exec.Command("bash", "../scripts/bt_scan.sh", fmt.Sprintf("%d", duration))
 
 				stdout, err := cmd.StdoutPipe()
 				if err != nil {
@@ -126,6 +143,7 @@ func loadBluetoothScan() {
 
 	btScanFlex := tview.NewFlex().
 		AddItem(btScanText, 0, 3, false).
+		AddItem(btScanDuration, 0, 1, false).
 		AddItem(btScanButton, 0, 1, true).
 		AddItem(backButton, 0, 1, false)
 	btScanFlex.SetDirection(tview.FlexRow)

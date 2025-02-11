@@ -2,15 +2,12 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 	"os/exec"
 	"strings"
 	"sync"
-	"time"
-
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 )
 
 // Function that loads wi-fi sub-menu
@@ -53,6 +50,7 @@ func loadWifiMenu() {
 // Function that loads wi-fi sniffing sub-menu
 func loadSniffingMenu() {
 	buttons = nil
+	var duration int
 
 	sniffingText := tview.NewTextView().
 		SetDynamicColors(true).
@@ -61,32 +59,49 @@ func loadSniffingMenu() {
 	sniffingText.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
 
+	sniffDuration := tview.NewDropDown().SetLabel("Duration (Seconds): ").SetLabelColor(tcell.ColorWhite)
+	sniffDuration.
+		AddOption("10",
+			func() {
+				duration = 10
+			}).
+		AddOption("20", func() {
+			duration = 20
+		}).
+		AddOption("30", func() {
+			duration = 30
+		}).AddOption("60", func() {
+		duration = 60
+	})
+	sniffDuration.SetCurrentOption(0)
+
 	sniffButton := tview.NewButton("Start Sniffing").
 		SetSelectedFunc(func() {
-			logFileName := fmt.Sprintf("../logfiles/wifisnifflogs/sniff_log_%d.pcap", time.Now().Unix())
-
-			cmd := exec.Command("sudo", "ettercap", "-T", "-w", logFileName, "-i", "wlo1") //TODO: Make sniff exit gracefully
-			stderr := &bytes.Buffer{}
-			cmd.Stderr = stderr
-
-			// Start the sniffing process
-			if err := cmd.Start(); err != nil {
-				sniffingText.SetText(fmt.Sprintf("[red]Error starting command: %v\n[red]", err))
-				return
-			}
-
-			sniffingText.SetText("Sniffing in progress")
-
-			// Go function that waits for the process to finish and updates the text view
+			sniffingText.SetText("[white]Sniffing in progress...please wait!")
 			go func() {
+				cmd := exec.Command("bash", "../scripts/wifi_scan.sh", fmt.Sprintf("%d", duration))
+
+				// Start the script to initiate scanning
+				if err := cmd.Start(); err != nil {
+					app.QueueUpdateDraw(func() {
+						sniffingText.SetText(fmt.Sprintf("[red]Error starting script:[white] %v\n", err))
+					})
+					return
+				}
+
+				// Go function that waits for the process to finish and updates the text view
 				err := cmd.Wait()
+				if err != nil {
+					app.QueueUpdateDraw(func() {
+						sniffingText.SetText(fmt.Sprintf("[red]Script execution error:[white] %v\n", err))
+					})
+					return
+				}
 				app.QueueUpdateDraw(func() {
 					if err != nil {
-						sniffingText.SetText(fmt.Sprintf("[red]Command finished with error: %v\n[red]", err)).
-							SetTextColor(tcell.ColorRed)
+						sniffingText.SetText(fmt.Sprintf("[red]Command finished with error:[white] %v\n", err))
 					} else {
-						sniffingText.SetText("Sniffing completed successfully!").
-							SetTextColor(tcell.ColorGreen)
+						sniffingText.SetText("[green]Sniffing completed successfully!\n[blue]A pcap file has been created!")
 					}
 				})
 			}()
@@ -104,6 +119,7 @@ func loadSniffingMenu() {
 
 	sniffFlex := tview.NewFlex().
 		AddItem(sniffingText, 0, 3, false).
+		AddItem(sniffDuration, 0, 1, false).
 		AddItem(sniffButton, 0, 1, true).
 		AddItem(backButton, 0, 1, false).
 		SetDirection(tview.FlexRow)
