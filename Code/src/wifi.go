@@ -63,7 +63,7 @@ func loadSniffingMenu() {
 
 	sniffButton := tview.NewButton("Start Sniffing").
 		SetSelectedFunc(func() {
-			logFileName := fmt.Sprintf("sniff_log_%d.pcap", time.Now().Unix())
+			logFileName := fmt.Sprintf("../logfiles/wifisnifflogs/sniff_log_%d.pcap", time.Now().Unix())
 
 			cmd := exec.Command("sudo", "ettercap", "-T", "-w", logFileName, "-i", "wlo1") //TODO: Make sniff exit gracefully
 			stderr := &bytes.Buffer{}

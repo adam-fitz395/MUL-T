@@ -6,6 +6,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"os/exec"
+	"regexp"
 	"strings"
 )
 
@@ -37,8 +38,6 @@ func loadBluetoothMenu() {
 }
 
 func loadBluetoothScan() {
-	//var checkMAC bool
-
 	buttons = nil
 	btScanText := tview.NewTextView().
 		SetDynamicColors(true).
@@ -46,24 +45,15 @@ func loadBluetoothScan() {
 
 	btScanText.SetBorder(true)
 
-	MACCheckbox := tview.NewCheckbox().
-		SetLabel("MAC Address ").
-		SetChecked(false).
-		SetChangedFunc(func(checked bool) {
-			//checkMAC = checked
-		})
-
-	btCheckFlex := tview.NewFlex().
-		AddItem(MACCheckbox, 0, 1, false)
-
 	btScanButton := tview.NewButton("Scan").
 		SetSelectedFunc(func() {
-			btScanText.SetText("[white] Scanning in progress...please wait!")
+			btScanText.SetText("[white]Scanning in progress...please wait!")
 			go func() {
 				var devices []string
 
 				// Run bash script with bluetoothctl scan
 				cmd := exec.Command("bash", "../scripts/bt_scan.sh")
+
 				stdout, err := cmd.StdoutPipe()
 				if err != nil {
 					app.QueueUpdateDraw(func() {
@@ -84,8 +74,18 @@ func loadBluetoothScan() {
 				scanner := bufio.NewScanner(stdout)
 				for scanner.Scan() {
 					line := strings.TrimSpace(scanner.Text())
-					line = strings.SplitN(line, " ", 2)[0]
-					devices = append(devices, line)
+
+					re := regexp.MustCompile(`([0-9A-Fa-f:]{17})\s+-\s+(.*)`)
+					match := re.FindStringSubmatch(line)
+
+					if len(match) > 0 {
+						deviceMAC := match[1]  // MAC address
+						deviceName := match[2] // Device name
+
+						// Ensure unique devices (MAC is unique key)
+
+						devices = append(devices, fmt.Sprintf("%s - %s", deviceMAC, deviceName))
+					}
 				}
 
 				if err := cmd.Wait(); err != nil {
@@ -105,9 +105,10 @@ func loadBluetoothScan() {
 				// Update UI with results
 				app.QueueUpdateDraw(func() {
 					if len(devices) == 0 {
-						btScanText.SetText("[Red]No devices found.")
+						btScanText.SetText("[green]Scan complete!\n[Red]No devices found.")
 					} else {
-						btScanText.SetText(fmt.Sprintf("Found Devices:\n%s", strings.Join(devices, "\n")))
+						btScanText.SetText(fmt.Sprintf("[green]Scan complete!\n[white]Found Devices:\n%s\n[blue]A log file has been created!",
+							strings.Join(devices, "\n")))
 					}
 				})
 			}()
@@ -124,8 +125,7 @@ func loadBluetoothScan() {
 		SetBorderColor(tcell.ColorWhite)
 
 	btScanFlex := tview.NewFlex().
-		AddItem(btScanText, 0, 1, false).
-		AddItem(btCheckFlex, 0, 1, false).
+		AddItem(btScanText, 0, 3, false).
 		AddItem(btScanButton, 0, 1, true).
 		AddItem(backButton, 0, 1, false)
 	btScanFlex.SetDirection(tview.FlexRow)
