@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -29,6 +30,13 @@ func loadWifiMenu() {
 	scanButton.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
 
+	MITMButton := tview.NewButton("MITM").
+		SetSelectedFunc(func() {
+			pages.SwitchToPage("mitm")
+		})
+	MITMButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
 	backButton := tview.NewButton("Back").
 		SetSelectedFunc(func() {
 			pages.SwitchToPage("main") // Switch back to the main page
@@ -39,11 +47,12 @@ func loadWifiMenu() {
 	wifiFlex := tview.NewFlex().
 		AddItem(sniffButton, 0, 1, true).
 		AddItem(scanButton, 0, 1, false).
+		AddItem(MITMButton, 0, 1, false).
 		AddItem(backButton, 0, 1, false).
 		SetDirection(tview.FlexRow)
 
 	pages.AddPage("wifi", wifiFlex, true, false) // Add the Wi-Fi page to pages
-	buttons = []*tview.Button{sniffButton, scanButton, backButton}
+	buttons = []*tview.Button{sniffButton, scanButton, MITMButton, backButton}
 	enableTabFocus(wifiFlex, buttons)
 }
 
@@ -333,4 +342,108 @@ func loadScanMenu() {
 	buttons = []*tview.Button{scanButton, backButton}
 	pages.AddPage("scan", scanFlex, true, false)
 	enableTabFocus(scanFlex, buttons)
+}
+
+func loadMITMMenu() {
+	MITMText := tview.NewTextView().
+		SetDynamicColors(true).
+		SetText("[green]Ready to perform MITM attack!")
+
+	MITMText.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
+	startMITMButton := tview.NewButton("Start").
+		SetSelectedFunc(func() {
+			MITMText.SetText("[red]MITM attack in progress! Press [blue]Stop[red] to stop attack!")
+			go func() {
+				cmd := exec.Command("bash", "../scripts/mitm.sh", "On")
+
+				// Capture command output
+				var out bytes.Buffer
+				cmd.Stdout = &out
+				cmd.Stderr = &out
+
+				if err := cmd.Start(); err != nil {
+					app.QueueUpdateDraw(func() {
+						MITMText.SetText(fmt.Sprintf("[red]Error starting MITM: %v", err))
+					})
+					return
+				}
+
+				// Wait for command completion in goroutine
+				go func() {
+					err := cmd.Wait()
+					app.QueueUpdateDraw(func() {
+						if err != nil {
+							MITMText.SetText(fmt.Sprintf(
+								"[red]MITM failed:[white]\n%s\n[red]Error: %v",
+								out.String(), err,
+							))
+						} else {
+							MITMText.SetText(fmt.Sprintf(
+								"[green]MITM started successfully!\n[white]%s",
+								out.String(),
+							))
+						}
+					})
+				}()
+			}()
+		})
+
+	startMITMButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
+	stopMITMButton := tview.NewButton("Stop").SetSelectedFunc(func() {
+		cmd := exec.Command("bash", "../scripts/mitm.sh", "Off")
+
+		// Capture command output
+		var out bytes.Buffer
+		cmd.Stdout = &out
+		cmd.Stderr = &out
+
+		if err := cmd.Start(); err != nil {
+			app.QueueUpdateDraw(func() {
+				MITMText.SetText(fmt.Sprintf("[red]Error stopping MITM: %v", err))
+			})
+			return
+		}
+
+		// Handle command completion
+		go func() {
+			err := cmd.Wait()
+			app.QueueUpdateDraw(func() {
+				if err != nil {
+					MITMText.SetText(fmt.Sprintf(
+						"[red]Stop failed:[white]\n%s\n[red]Error: %v",
+						out.String(), err,
+					))
+				} else {
+					MITMText.SetText(fmt.Sprintf(
+						"[green]MITM stopped!\n[blue]Log created!\n[white]%s",
+						out.String(),
+					))
+				}
+			})
+		}()
+	})
+
+	stopMITMButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
+	MITMBackButton := tview.NewButton("Back").SetSelectedFunc(func() {
+		pages.SwitchToPage("wifi")
+	})
+	MITMBackButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
+	MITMFlex := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(MITMText, 0, 3, false).
+		AddItem(startMITMButton, 0, 1, true).
+		AddItem(stopMITMButton, 0, 1, false).
+		AddItem(MITMBackButton, 0, 1, false)
+
+	buttons = []*tview.Button{startMITMButton, stopMITMButton, MITMBackButton}
+	pages.AddPage("mitm", MITMFlex, true, false)
+	enableTabFocus(MITMFlex, buttons)
 }

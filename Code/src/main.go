@@ -34,6 +34,7 @@ func instantiateMenus() {
 	loadWifiMenu()
 	loadSniffingMenu()
 	loadScanMenu()
+	loadMITMMenu()
 	loadBluetoothMenu()
 	loadBluetoothScan()
 	loadIRMenu()

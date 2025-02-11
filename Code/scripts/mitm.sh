@@ -25,7 +25,6 @@ if [[ "$ONOFF" == "On" ]]; then
     echo "$MITM_PID" > "$PID_FILE"
     echo "$LOG_FILE" >> "$PID_FILE"
     echo "MITM attack started with PID: $MITM_PID"
-    echo "Quiet output logging to: $LOG_FILE"
 
 elif [[ "$ONOFF" == "Off" ]]; then
     if [ -f "$PID_FILE" ]; then
@@ -36,7 +35,7 @@ elif [[ "$ONOFF" == "Off" ]]; then
         if kill -0 "$MITM_PID" 2>/dev/null; then
             sudo kill "$MITM_PID"
             echo "MITM attack stopped."
-            echo "Final output flushed to: $LOG_FILE"
+            echo "Log created at: $LOG_FILE"
         else
             echo "Process $MITM_PID not found."
         fi
