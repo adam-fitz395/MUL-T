@@ -88,7 +88,7 @@ func loadSniffingMenu() {
 		SetSelectedFunc(func() {
 			sniffingText.SetText("[white]Sniffing in progress...please wait!")
 			go func() {
-				cmd := exec.Command("bash", "../scripts/wifi_scan.sh", fmt.Sprintf("%d", duration))
+				cmd := exec.Command("bash", "../scripts/wifi_sniff.sh", fmt.Sprintf("%d", duration))
 
 				// Start the script to initiate scanning
 				if err := cmd.Start(); err != nil {
@@ -140,7 +140,7 @@ func loadSniffingMenu() {
 
 func loadScanMenu() {
 	buttons = nil
-	var checkESSID, checkAddress, checkProtocol, checkFreq bool
+	var checkESSID, checkAddress, checkFreq = true, true, true
 
 	scanText := tview.NewTextView().
 		SetDynamicColors(true).
@@ -164,13 +164,6 @@ func loadScanMenu() {
 			checkAddress = checked
 		})
 
-	protocolCheckbox := tview.NewCheckbox().
-		SetLabel("Protocol").
-		SetChecked(true).
-		SetChangedFunc(func(checked bool) {
-			checkProtocol = checked
-		})
-
 	frequencyCheckbox := tview.NewCheckbox().
 		SetLabel("Frequency").
 		SetChecked(true).
@@ -181,18 +174,17 @@ func loadScanMenu() {
 	checkFlex := tview.NewFlex().
 		AddItem(ssidCheckbox, 0, 1, false).
 		AddItem(addressCheckbox, 0, 1, false).
-		AddItem(protocolCheckbox, 0, 1, false).
 		AddItem(frequencyCheckbox, 0, 1, false)
 
 	scanButton := tview.NewButton("Start Scan").
 		SetSelectedFunc(func() {
-			var essidList, addressList, protocolList, frequencyList, networks, lines []string
+			var essidList, addressList, frequencyList, networks, lines []string
 			var wg sync.WaitGroup
 
 			scanText.SetText("[white]Scanning for networks...")
 
 			go func() {
-				cmd := exec.Command("sudo", "iwlist", "wlan0", "scan") // CHANGE THIS TO PI INTERFACE
+				cmd := exec.Command("sudo", "iwlist", "wlo1", "scan") // CHANGE THIS TO PI INTERFACE
 				stdout, err := cmd.StdoutPipe()
 				if err != nil {
 					scanText.SetText(fmt.Sprintf("[red]Failed to create pipe: %v\n[red]", err))
@@ -245,19 +237,6 @@ func loadScanMenu() {
 					}()
 				}
 
-				if checkProtocol {
-					wg.Add(1)
-					go func() {
-						defer wg.Done()
-						for _, line := range lines {
-							if strings.HasPrefix(line, "Protocol:") {
-								protocolValue := strings.TrimPrefix(line, "Protocol:")
-								protocolList = append(protocolList, strings.TrimSpace(protocolValue))
-							}
-						}
-					}()
-				}
-
 				if checkFreq {
 					wg.Add(1)
 					defer wg.Done()
@@ -284,28 +263,23 @@ func loadScanMenu() {
 					if len(addressList) > maxLength {
 						maxLength = len(addressList)
 					}
-					if len(protocolList) > maxLength {
-						maxLength = len(protocolList)
-					}
 
 					for index := 0; index < maxLength; index++ {
-						var thisESSID, thisAddress, thisProtocol, thisFrequency string
+						var thisESSID, thisAddress, thisFrequency string
 
 						if checkESSID && index < len(essidList) {
 							thisESSID = essidList[index]
 						}
+
 						if checkAddress && index < len(addressList) {
 							thisAddress = addressList[index]
-						}
-						if checkProtocol && index < len(protocolList) {
-							thisProtocol = protocolList[index]
 						}
 
 						if checkFreq && index < len(frequencyList) {
 							thisFrequency = frequencyList[index]
 						}
 
-						thisNetwork := fmt.Sprintf("%s | %s | %s | %s", thisESSID, thisAddress, thisProtocol, thisFrequency)
+						thisNetwork := fmt.Sprintf("%s | %s | %s", thisESSID, thisAddress, thisFrequency)
 						networks = append(networks, thisNetwork)
 					}
 
