@@ -152,28 +152,28 @@ func loadScanMenu() {
 
 	ssidCheckbox := tview.NewCheckbox().
 		SetLabel("SSID").
-		SetChecked(false).
+		SetChecked(true).
 		SetChangedFunc(func(checked bool) {
 			checkESSID = checked
 		})
 
 	addressCheckbox := tview.NewCheckbox().
 		SetLabel("Address").
-		SetChecked(false).
+		SetChecked(true).
 		SetChangedFunc(func(checked bool) {
 			checkAddress = checked
 		})
 
 	protocolCheckbox := tview.NewCheckbox().
 		SetLabel("Protocol").
-		SetChecked(false).
+		SetChecked(true).
 		SetChangedFunc(func(checked bool) {
 			checkProtocol = checked
 		})
 
 	frequencyCheckbox := tview.NewCheckbox().
 		SetLabel("Frequency").
-		SetChecked(false).
+		SetChecked(true).
 		SetChangedFunc(func(checked bool) {
 			checkFreq = checked
 		})
