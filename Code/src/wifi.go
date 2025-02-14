@@ -192,7 +192,7 @@ func loadScanMenu() {
 			scanText.SetText("[white]Scanning for networks...")
 
 			go func() {
-				cmd := exec.Command("sudo", "iwlist", "wlo1", "scan") // CHANGE THIS TO PI INTERFACE
+				cmd := exec.Command("sudo", "iwlist", "wlan0", "scan") // CHANGE THIS TO PI INTERFACE
 				stdout, err := cmd.StdoutPipe()
 				if err != nil {
 					scanText.SetText(fmt.Sprintf("[red]Failed to create pipe: %v\n[red]", err))
