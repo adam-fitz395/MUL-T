@@ -1,49 +1,40 @@
 #!/bin/bash
 
-# Create a timestamp for unique log file naming.
 TIMESTAMP=$(date +%s)
 LOG_FILE="/home/adamfitz395/Documents/GitHub/MultiTool-Project/Code/logfiles/btlogs/bluetooth_scan_$TIMESTAMP.log"
+DURATION=$1
 
-# Ensure the directory for logfile exists.
+# Ensure directory exists
 mkdir -p "$(dirname "$LOG_FILE")"
 touch "$LOG_FILE"
 
-# Create a temporary file to store the hcitool output.
-TMP_LOG=$(mktemp)
-
-DURATION=$1
-
-# Restart Bluetooth to ensure no errors occur
+# Restart Bluetooth
 echo "Starting Bluetooth scan..."
 sudo hciconfig hci0 down
 sudo hciconfig hci0 up
 
-# Run hcitool lescan in the background
-sudo hcitool lescan > "$TMP_LOG" 2>&1 &
+# Create a FIFO (named pipe) for real-time output
+FIFO_LOG=$(mktemp -u)
+mkfifo "$FIFO_LOG"
 
-SCAN_PID=$!  # Get the process ID of hcitool lescan
+# Start hcitool lescan, writing to the FIFO
+sudo timeout "$DURATION" stdbuf -oL hcitool lescan > "$FIFO_LOG" 2>&1 &
 
-# Start a background process that waits x seconds, then sends signal to interrupt
-( sleep "$DURATION"; sudo kill -SIGINT "$SCAN_PID" ) &
+# Process FIFO output in the background
+(
+  while read -r line; do
+    if echo "$line" | grep -qE '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}'; then
+      mac=$(echo "$line" | awk '{print $1}')
+      name=$(echo "$line" | cut -d ' ' -f2- | sed 's/^ *//')
+      echo "$mac - $name" | tee -a "$LOG_FILE"
+    fi
+  done < "$FIFO_LOG"
+) &
 
-echo "Scanning for $DURATION seconds..."
-wait "$SCAN_PID"  # Wait for hcitool lescan to stop
+# Wait for the timeout to finish
+wait
 
-echo "Processing discovered devices..."
-
-# Extract and log discovered devices
-grep -E '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' "$TMP_LOG" | while read -r line; do
-    mac=$(echo "$line" | awk '{print $1}')
-    name=$(echo "$line" | cut -d ' ' -f2- | sed 's/^ *//')
-
-    log_entry="$mac - $name" # 3A:1A:52:F2:65:4F - ET-4800 Series
-
-    # Append the entry to the log file and print it.
-    echo "$log_entry" | tee -a "$LOG_FILE"
-done
-
-# Clean up the temporary file.
-rm "$TMP_LOG"
-
+# Cleanup
+rm -f "$FIFO_LOG"
 echo "Scan complete! Results saved to $LOG_FILE"
 exit 0
