@@ -18,7 +18,7 @@ SCAN_PID=$!
 (
   sleep "$duration"
   echo "Sending SIGINT to ettercap (PID: $SCAN_PID)"
-  sudo kill -SIGINT "$SCAN_PID"
+  sudo kill -SIGKILL "$SCAN_PID"
 ) &
 
 echo "Scanning for $duration seconds..."
