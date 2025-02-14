@@ -1,49 +1,37 @@
 #!/bin/bash
 
-# Create a timestamp for unique log file naming.
 TIMESTAMP=$(date +%s)
 LOG_FILE="/home/adamfitz395/Documents/GitHub/MultiTool-Project/Code/logfiles/btlogs/bluetooth_scan_$TIMESTAMP.log"
+DURATION=$1
 
-# Ensure the directory for logfile exists.
+# Ensure directory exists
 mkdir -p "$(dirname "$LOG_FILE")"
 touch "$LOG_FILE"
 
-# Create a temporary file to store the hcitool output.
-TMP_LOG=$(mktemp)
-
-DURATION=$1
-
-# Restart Bluetooth to ensure no errors occur
+# Restart Bluetooth
 echo "Starting Bluetooth scan..."
 sudo hciconfig hci0 down
 sudo hciconfig hci0 up
 
-# Run hcitool lescan in the background
-sudo hcitool lescan > "$TMP_LOG" 2>&1 &
+# Run hcitool lescan with unbuffered output
+TMP_LOG=$(mktemp)
+sudo stdbuf -oL -eL hcitool lescan > "$TMP_LOG" 2>&1 &
+SCAN_PID=$!
 
-SCAN_PID=$!  # Get the process ID of hcitool lescan
-
-# Start a background process that waits x seconds, then sends signal to interrupt
-( sleep "$DURATION"; sudo kill -SIGINT "$SCAN_PID" ) &
+# Terminate after duration
+( sleep "$DURATION"; sudo kill -SIGTERM "$SCAN_PID"; sleep 1 ) &
 
 echo "Scanning for $DURATION seconds..."
-wait "$SCAN_PID"  # Wait for hcitool lescan to stop
+wait "$SCAN_PID" 2>/dev/null
 
+# Process results
 echo "Processing discovered devices..."
-
-# Extract and log discovered devices
 grep -E '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' "$TMP_LOG" | while read -r line; do
-    mac=$(echo "$line" | awk '{print $1}')
-    name=$(echo "$line" | cut -d ' ' -f2- | sed 's/^ *//')
-
-    log_entry="$mac - $name" # 3A:1A:52:F2:65:4F - ET-4800 Series
-
-    # Append the entry to the log file and print it.
-    echo "$log_entry" | tee -a "$LOG_FILE"
+  mac=$(echo "$line" | awk '{print $1}')
+  name=$(echo "$line" | cut -d ' ' -f2- | sed 's/^ *//')
+  echo "$mac - $name" | tee -a "$LOG_FILE"
 done
 
-# Clean up the temporary file.
 rm "$TMP_LOG"
-
 echo "Scan complete! Results saved to $LOG_FILE"
 exit 0
