@@ -59,7 +59,7 @@ func loadMainMenu() {
 		})
 	bluetoothButton.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
-	bluetoothButton.SetBackgroundColorActivated(tcell.ColorDarkBlue).
+	bluetoothButton.SetBackgroundColorActivated(tcell.ColorBlue).
 		SetLabelColorActivated(tcell.ColorWhite)
 
 	IRButton := tview.NewButton("Infrared").
@@ -79,7 +79,7 @@ func loadMainMenu() {
 		})
 	NFCButton.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
-	NFCButton.SetBackgroundColorActivated(tcell.ColorBlueViolet).
+	NFCButton.SetBackgroundColorActivated(tcell.ColorPurple).
 		SetLabelColorActivated(tcell.ColorWhite)
 
 	exitButton := tview.NewButton("Exit").
