@@ -37,6 +37,7 @@ func instantiateMenus() {
 	loadMITMMenu()
 	loadBluetoothMenu()
 	loadBluetoothScan()
+	loadBluetoothDeauth()
 	loadIRMenu()
 }
 

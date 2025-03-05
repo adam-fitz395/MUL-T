@@ -20,6 +20,13 @@ func loadBluetoothMenu() {
 	btScanButton.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
 
+	btDeauthButton := tview.NewButton("Deauth").
+		SetSelectedFunc(func() {
+			pages.SwitchToPage("btDeauth")
+		})
+	btDeauthButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
 	backButton := tview.NewButton("Back").
 		SetSelectedFunc(func() {
 			pages.SwitchToPage("main") // Switch back to the main page
@@ -29,10 +36,11 @@ func loadBluetoothMenu() {
 
 	bluetoothFlex := tview.NewFlex().
 		AddItem(btScanButton, 0, 1, true).
+		AddItem(btDeauthButton, 0, 1, true).
 		AddItem(backButton, 0, 1, false).
 		SetDirection(tview.FlexRow)
 
-	buttons = []*tview.Button{btScanButton, backButton}
+	buttons = []*tview.Button{btScanButton, btDeauthButton, backButton}
 	pages.AddPage("bluetooth", bluetoothFlex, true, false) // Add the Wi-Fi page to pages
 	enableTabFocus(bluetoothFlex, buttons)
 }
@@ -151,4 +159,45 @@ func loadBluetoothScan() {
 	buttons = []*tview.Button{btScanButton, backButton}
 	pages.AddPage("btScan", btScanFlex, true, false) // Add the Wi-Fi page to pages
 	enableTabFocus(btScanFlex, buttons)
+}
+
+func loadBluetoothDeauth() {
+	buttons = nil
+
+	deauthText := tview.NewTextView().
+		SetDynamicColors(true).
+		SetText("[green]Ready to Deauth! Please select a device!")
+
+	deauthText.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
+	deviceList := tview.NewDropDown()
+	deviceList.SetBorder(true).SetBorderColor(tcell.ColorWhite)
+	deviceList.SetLabel("Device HERE!")
+
+	deauthButton := tview.NewButton("Deauth").
+		SetSelectedFunc(func() {
+
+		})
+
+	deauthButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
+	backButton := tview.NewButton("Back").
+		SetSelectedFunc(func() {
+			pages.SwitchToPage("bluetooth")
+		})
+	backButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
+	deauthFlex := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(deauthText, 0, 2, false).
+		AddItem(deviceList, 0, 1, false).
+		AddItem(deauthButton, 0, 1, true).
+		AddItem(backButton, 0, 1, false)
+
+	buttons = []*tview.Button{deauthButton, backButton}
+	pages.AddPage("btDeauth", deauthFlex, true, false)
+	enableTabFocus(deauthFlex, buttons)
 }
