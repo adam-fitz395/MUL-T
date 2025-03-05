@@ -17,6 +17,13 @@ func main() {
 	app = tview.NewApplication()
 	pages = tview.NewPages()
 
+	cursor := tview.NewTextView().SetText("X").SetTextColor(tcell.ColorRed)
+	app.SetMouseCapture(func(event *tcell.EventMouse) tview.MouseAction {
+		x, y := event.Position()
+		cursor.SetText(fmt.Sprintf("[X@%d,%d]", x, y))
+		return tview.MouseAction
+	})
+
 	instantiateMenus()
 
 	// Run application or return error
