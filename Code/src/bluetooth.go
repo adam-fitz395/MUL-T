@@ -41,7 +41,7 @@ func loadBluetoothMenu() {
 		SetDirection(tview.FlexRow)
 
 	buttons = []*tview.Button{btScanButton, btDeauthButton, backButton}
-	pages.AddPage("bluetooth", bluetoothFlex, true, false) // Add the Wi-Fi page to pages
+	pages.AddPage("bluetooth", bluetoothFlex, true, false)
 	enableTabFocus(bluetoothFlex, buttons)
 }
 
@@ -157,7 +157,7 @@ func loadBluetoothScan() {
 	btScanFlex.SetDirection(tview.FlexRow)
 
 	buttons = []*tview.Button{btScanButton, backButton}
-	pages.AddPage("btScan", btScanFlex, true, false) // Add the Wi-Fi page to pages
+	pages.AddPage("btScan", btScanFlex, true, false)
 	enableTabFocus(btScanFlex, buttons)
 }
 
@@ -173,7 +173,85 @@ func loadBluetoothDeauth() {
 
 	deviceList := tview.NewDropDown()
 	deviceList.SetBorder(true).SetBorderColor(tcell.ColorWhite)
-	deviceList.SetLabel("Device HERE!")
+	deviceList.SetLabel("Device: ")
+
+	// Bring bluetooth module down and up again to avoid errors
+	err := exec.Command("sudo", "hciconfig", "hci0", "down").Run()
+	if err != nil {
+		return
+	}
+
+	err = exec.Command("sudo", "hciconfig", "hci0", "up").Run()
+	if err != nil {
+		return
+	}
+
+	scanButton := tview.NewButton("Scan").
+		SetSelectedFunc(func() {
+			go func() {
+				var devices []string
+
+				// Run bash script with bluetoothctl scan
+				cmd := exec.Command("bash", "../scripts/bt_deauth_scan.sh")
+
+				stdout, err := cmd.StdoutPipe()
+				if err != nil {
+					app.QueueUpdateDraw(func() {
+						deauthText.SetText(fmt.Sprintf("[red]Failed to create pipe: %v\n[red]", err))
+					})
+					return
+				}
+
+				// Start the script to initiate scanning
+				if err := cmd.Start(); err != nil {
+					app.QueueUpdateDraw(func() {
+						deauthText.SetText(fmt.Sprintf("[red]Error starting script: %v\n", err))
+					})
+					return
+				}
+
+				// Read script output line by line
+				scanner := bufio.NewScanner(stdout)
+				for scanner.Scan() {
+					line := strings.TrimSpace(scanner.Text())
+
+					re := regexp.MustCompile(`([0-9A-Fa-f:]{17})\s+-\s+(.*)`)
+					match := re.FindStringSubmatch(line)
+
+					if len(match) > 0 {
+						deviceMAC := match[1]  // MAC address
+						deviceName := match[2] // Device name
+
+						// Ensure unique devices (MAC is unique key)
+
+						devices = append(devices, fmt.Sprintf("%s - %s", deviceMAC, deviceName))
+					}
+				}
+
+				if err := cmd.Wait(); err != nil {
+					app.QueueUpdateDraw(func() {
+						deauthText.SetText(fmt.Sprintf("[red]Script execution error: %v\n", err))
+					})
+					return
+				}
+
+				if err := scanner.Err(); err != nil {
+					app.QueueUpdateDraw(func() {
+						deauthText.SetText(fmt.Sprintf("[red]Scanner error: %v\n", err))
+					})
+					return
+				}
+
+				deviceList.SetOptions(devices, nil)
+				err = exec.Command("sudo", "rm", "-f", "/home/adamfitz395/Documents/GitHub/MultiTool-Project/Code/logfiles/btlogs").Run()
+				if err != nil {
+					return
+				}
+			}()
+		})
+
+	scanButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
 
 	deauthButton := tview.NewButton("Deauth").
 		SetSelectedFunc(func() {
@@ -194,10 +272,11 @@ func loadBluetoothDeauth() {
 		SetDirection(tview.FlexRow).
 		AddItem(deauthText, 0, 2, false).
 		AddItem(deviceList, 0, 1, false).
+		AddItem(scanButton, 0, 1, false).
 		AddItem(deauthButton, 0, 1, true).
 		AddItem(backButton, 0, 1, false)
 
-	buttons = []*tview.Button{deauthButton, backButton}
+	buttons = []*tview.Button{scanButton, deauthButton, backButton}
 	pages.AddPage("btDeauth", deauthFlex, true, false)
 	enableTabFocus(deauthFlex, buttons)
 }
