@@ -173,7 +173,9 @@ func loadBluetoothDeauth() {
 
 	deviceList := tview.NewDropDown()
 	deviceList.SetBorder(true).SetBorderColor(tcell.ColorWhite)
+	deviceList.SetFieldBackgroundColor(tcell.ColorWhite)
 	deviceList.SetLabel("Device: ")
+	deviceList.SetFieldTextColor(tcell.ColorBlack)
 
 	// Bring bluetooth module down and up again to avoid errors
 	err := exec.Command("sudo", "hciconfig", "hci0", "down").Run()
@@ -188,9 +190,10 @@ func loadBluetoothDeauth() {
 
 	scanButton := tview.NewButton("Scan").
 		SetSelectedFunc(func() {
-			go func() {
-				var devices []string
+			var devices []string
+			deviceList.SetOptions([]string{}, nil)
 
+			go func() {
 				// Run bash script with bluetoothctl scan
 				cmd := exec.Command("bash", "../scripts/bt_deauth_scan.sh")
 
@@ -209,6 +212,8 @@ func loadBluetoothDeauth() {
 					})
 					return
 				}
+
+				deauthText.SetText("[blue] Scanning for devices...please wait!")
 
 				// Read script output line by line
 				scanner := bufio.NewScanner(stdout)
@@ -242,6 +247,16 @@ func loadBluetoothDeauth() {
 					return
 				}
 
+				app.QueueUpdateDraw(func() {
+					deviceList.SetOptions(devices, nil)
+					if len(devices) > 0 {
+						deviceList.SetCurrentOption(0)
+						deauthText.SetText(fmt.Sprintf("[green]Found[blue] %d[green] devices!", len(devices)))
+					} else {
+						deauthText.SetText("[red]No devices found")
+					}
+				})
+
 				deviceList.SetOptions(devices, nil)
 				err = exec.Command("sudo", "rm", "-f", "/home/adamfitz395/Documents/GitHub/MultiTool-Project/Code/logfiles/btlogs").Run()
 				if err != nil {
@@ -255,7 +270,14 @@ func loadBluetoothDeauth() {
 
 	deauthButton := tview.NewButton("Deauth").
 		SetSelectedFunc(func() {
+			_, attackDevice := deviceList.GetCurrentOption()
+			if attackDevice == "" {
+				deauthText.SetText("[red] Error: No device was selected!")
+				return
+			}
+			deviceMAC := attackDevice[:17]
 
+			exec.Command("sudo", "bash", "../scripts/bt_deauth.sh", deviceMAC).Run()
 		})
 
 	deauthButton.SetBorder(true).

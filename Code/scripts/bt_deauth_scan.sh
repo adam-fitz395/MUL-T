@@ -16,7 +16,7 @@ FIFO_LOG=$(mktemp -u)
 mkfifo "$FIFO_LOG"
 
 # Start hcitool lescan, writing to the FIFO
-sudo timeout 10 stdbuf -oL hcitool lescan > "$FIFO_LOG" 2>&1 &
+sudo timeout 5 stdbuf -oL hcitool lescan > "$FIFO_LOG" 2>&1 &
 
 # Process FIFO output in the background
 (
