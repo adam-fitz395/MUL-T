@@ -257,8 +257,7 @@ func loadBluetoothDeauth() {
 					}
 				})
 
-				deviceList.SetOptions(devices, nil)
-				err = exec.Command("sudo", "rm", "-f", "/home/adamfitz395/Documents/GitHub/MultiTool-Project/Code/logfiles/btlogs").Run()
+				err = exec.Command("sudo", "rm", "-f", "/home/adamfitz395/Documents/GitHub/MultiTool-Project/Code/logfiles/btlogs/tmpscan.log").Run()
 				if err != nil {
 					return
 				}
