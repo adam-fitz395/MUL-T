@@ -24,7 +24,7 @@ func main() {
 		SetFocus(pages).
 		EnableMouse(true).
 		Run(); err != nil {
-		fmt.Print("Stinky code bad")
+		fmt.Print("Error running app:", err)
 	}
 }
 
@@ -39,6 +39,7 @@ func instantiateMenus() {
 	loadBluetoothScan()
 	loadBluetoothDeauth()
 	loadIRMenu()
+	loadIRScan()
 }
 
 // Function to load main menu
