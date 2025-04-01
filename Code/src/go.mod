@@ -4,6 +4,7 @@ go 1.23.2
 
 require (
 	github.com/gdamore/tcell/v2 v2.8.1
+	github.com/holoplot/go-evdev v0.0.0-20240306072622-217e18f17db1
 	github.com/rivo/tview v0.0.0-20241227133733-17b7edb88c57
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 )

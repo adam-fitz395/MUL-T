@@ -72,17 +72,6 @@ func loadMainMenu() {
 	IRButton.SetBackgroundColorActivated(tcell.ColorRed).
 		SetLabelColorActivated(tcell.ColorWhite)
 
-	NFCButton := tview.NewButton("NFC").
-		SetSelectedFunc(func() {
-			pages.SwitchToPage("nfc")
-			app.Stop()
-			UIDScan()
-		})
-	NFCButton.SetBorder(true).
-		SetBorderColor(tcell.ColorWhite)
-	NFCButton.SetBackgroundColorActivated(tcell.ColorPurple).
-		SetLabelColorActivated(tcell.ColorWhite)
-
 	exitButton := tview.NewButton("Exit").
 		SetSelectedFunc(func() {
 			app.Stop() // Exit the application
@@ -94,11 +83,10 @@ func loadMainMenu() {
 		AddItem(wifiButton, 0, 1, true).
 		AddItem(bluetoothButton, 0, 1, true).
 		AddItem(IRButton, 0, 1, false).
-		AddItem(NFCButton, 0, 1, false).
 		AddItem(exitButton, 0, 1, false).
 		SetDirection(tview.FlexRow)
 
-	buttons = []*tview.Button{wifiButton, bluetoothButton, IRButton, NFCButton, exitButton}
+	buttons = []*tview.Button{wifiButton, bluetoothButton, IRButton, exitButton}
 	pages.AddPage("main", mainFlex, true, true) // Add the main page to pages
 	enableTabFocus(mainFlex, buttons)
 }
