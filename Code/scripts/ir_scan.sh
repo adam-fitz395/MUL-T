@@ -3,6 +3,7 @@
 LOG_DIR="../logfiles/irscanlogs"
 REMOTE_NAME="MY_REMOTE"
 BUTTON_NAME="KEY_POWER"
+CONFIG_DIR="ir_signals"
 
 # Set LIRC options for the receiver
 sudo sed -i 's/^driver.*/driver = default/' /etc/lirc/lirc_options.conf
@@ -20,7 +21,7 @@ grep -Eo '[0-9]+' power_button.raw | tr '\n' ' ' > power_button.timings
 GAP=$(head -n 1 power_button.timings | awk '{print $1}')
 CODE=$(awk '{$1=""; print $0}' power_button.timings | sed 's/^ //')
 
-cat << EOF > ${REMOTE_NAME}.lircd.conf
+cat << EOF > ${CONFIG_DIR}/${REMOTE_NAME}.lircd.conf
 begin remote
   name  $REMOTE_NAME
   flags RAW_CODES
@@ -37,11 +38,11 @@ end remote
 EOF
 
 # Optional: Add frequency if using modulated signal
-sed -i "/^begin remote/a \ \ frequency    38000" ${REMOTE_NAME}.lircd.conf
+sed -i "/^begin remote/a \ \ frequency    38000" ${CONFIG_DIR}/${REMOTE_NAME}.lircd.conf
 
 # Move files to organized locations
-mkdir -p ir_signals
-mv power_button.* ir_signals/
-mv ${REMOTE_NAME}.lircd.conf ir_signals/
+mkdir -p ${CONFIG_DIR}
+mv power_button.* ${CONFIG_DIR}/
+mv ${CONFIG_DIR}/${REMOTE_NAME}.lircd.conf ${CONFIG_DIR}/
 
-echo "Config file created: ir_signals/${REMOTE_NAME}.lircd.conf"
+echo "Config file created: ${CONFIG_DIR}/${REMOTE_NAME}.lircd.conf"
