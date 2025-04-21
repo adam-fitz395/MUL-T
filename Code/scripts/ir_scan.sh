@@ -21,9 +21,10 @@ grep -Eo '[0-9]+' power_button.raw | tr '\n' ' ' > power_button.timings
 GAP=$(head -n 1 power_button.timings | awk '{print $1}')
 CODE=$(awk '{$1=""; print $0}' power_button.timings | sed 's/^ //')
 
-cat << EOF > ${CONFIG_DIR}/${REMOTE_NAME}.lircd.conf
+# Write the configuration file with variable expansion
+cat <<-EOF > ${CONFIG_DIR}/${REMOTE_NAME}.lircd.conf
 begin remote
-  name  $REMOTE_NAME
+  name  ${REMOTE_NAME}
   flags RAW_CODES
   eps            30
   aeps          100
@@ -31,8 +32,8 @@ begin remote
   toggle_bit_mask 0x0
 
   begin raw_codes
-    name $BUTTON_NAME
-      $CODE
+    name ${BUTTON_NAME}
+      ${CODE}
   end raw_codes
 end remote
 EOF
