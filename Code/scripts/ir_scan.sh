@@ -24,7 +24,7 @@ CODE=$(awk '{$1=""; print $0}' power_button.timings | sed 's/^ //')
 # Write the configuration file with variable expansion
 cat <<-EOF > ${CONFIG_DIR}/${REMOTE_NAME}.lircd.conf
 begin remote
-  name  ${REMOTE_NAME}
+  name  MY_REMOTE
   flags RAW_CODES
   eps            30
   aeps          100
