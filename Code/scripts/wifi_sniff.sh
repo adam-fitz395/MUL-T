@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TIMESTAMP=$(date +%s)
-LOG_DIR="/home/adamfitz395/Documents/GitHub/MultiTool-Project/Code/logfiles/wifisnifflogs"
+LOG_DIR="../logfiles/wifisnifflogs"
 LOG_FILE="$LOG_DIR/sniff_log_$TIMESTAMP.pcap"
 duration=$1
 

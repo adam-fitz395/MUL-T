@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TEMP_LOG_FILE="/home/adamfitz395/Documents/GitHub/MultiTool-Project/Code/logfiles/btlogs/tmpscan.log"
+TEMP_LOG_FILE="../logfiles/btlogs/tmpscan.log"
 
 # Ensure directory exists
 mkdir -p "$(dirname "$TEMP_LOG_FILE")"

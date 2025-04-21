@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LOG_DIR="/home/adamfitz395/Documents/GitHub/MultiTool-Project/Code/logfiles/btlogs"
+LOG_DIR="../logfiles/btlogs"
 PID_FILE="$LOG_DIR/deauth.pid"
 MAC=$1
 

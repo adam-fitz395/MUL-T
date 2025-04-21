@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Path configurations
-LOG_DIR="/home/adamfitz395/Documents/GitHub/MultiTool-Project/Code/logfiles/mitmlogs"
+LOG_DIR="../logfiles/mitmlogs"
 LOG_FILE="$LOG_DIR/mitm_log_$(date +%s).log"
 PID_FILE="$LOG_DIR/mitm.pid"
 

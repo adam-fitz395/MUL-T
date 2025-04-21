@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TIMESTAMP=$(date +%s)
-LOG_FILE="/home/adamfitz395/Documents/GitHub/MultiTool-Project/Code/logfiles/btlogs/bluetooth_scan_$TIMESTAMP.log"
+LOG_FILE="../logfiles/btlogs/bluetooth_scan_$TIMESTAMP.log"
 DURATION=$1
 
 # Ensure directory exists
