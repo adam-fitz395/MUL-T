@@ -19,6 +19,13 @@ func loadIRMenu() {
 	scanButton.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
 
+	emitButton := tview.NewButton("Emit").
+		SetSelectedFunc(func() {
+			pages.SwitchToPage("iremit")
+		})
+	emitButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
 	backButton := tview.NewButton("Back").
 		SetSelectedFunc(func() {
 			pages.SwitchToPage("main")
@@ -29,7 +36,8 @@ func loadIRMenu() {
 	IRFlex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(scanButton, 0, 1, true).
-		AddItem(backButton, 0, 1, false)
+		AddItem(backButton, 0, 1, false).
+		AddItem(emitButton, 0, 1, false)
 
 	buttons = []*tview.Button{scanButton, backButton}
 	pages.AddPage("infrared", IRFlex, true, false)
@@ -106,4 +114,44 @@ func loadIRScan() {
 	buttons = []*tview.Button{scanButton, scanBackButton}
 	pages.AddPage("irscan", scanFlex, true, false)
 	enableTabFocus(scanFlex, buttons)
+}
+
+func loadIREmit() {
+	buttons = nil
+	emitText := tview.NewTextView().
+		SetDynamicColors(true).SetText("[green]Ready to scan!")
+	emitText.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
+	emitDropdown := tview.NewDropDown().
+		AddOption("")
+	emitDropdown.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
+	emitButton := tview.NewButton("Emit").
+		SetSelectedFunc(func() {
+			go func() {
+
+			}()
+		})
+	emitButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
+	emitBackButton := tview.NewButton("Back").
+		SetSelectedFunc(func() {
+			pages.SwitchToPage("infrared")
+		})
+	emitBackButton.SetBorder(true).
+		SetBorderColor(tcell.ColorWhite)
+
+	emitFlex := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(emitText, 0, 3, false).
+		AddItem(emitDropdown, 0, 1, true).
+		AddItem(emitButton, 0, 1, true).
+		AddItem(emitBackButton, 0, 1, false)
+
+	buttons = []*tview.Button{emitButton, emitBackButton}
+	pages.AddPage("iremit", emitFlex, true, false)
+	enableTabFocus(emitFlex, buttons)
 }

@@ -4,6 +4,10 @@ LOG_DIR="../logfiles/irscanlogs"
 REMOTE_NAME="MY_REMOTE"
 BUTTON_NAME="KEY_POWER"
 
+# Set LIRC options for the receiver
+sudo sed -i 's/^driver.*/driver = default/' /etc/lirc/lirc_options.conf
+sudo sed -i 's/^device.*/device = \/dev\/lirc1/' /etc/lirc/lirc_options.conf
+
 # Capture raw signal for 10 seconds
 sudo systemctl stop lircd
 sudo killall lircd 2>/dev/null
