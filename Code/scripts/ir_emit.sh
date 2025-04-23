@@ -10,7 +10,7 @@ sudo sed -i 's/^driver.*/driver = default/' /etc/lirc/lirc_options.conf
 sudo sed -i 's/^device.*/device = \/dev\/lirc0/' /etc/lirc/lirc_options.conf
 
 # Copy the configuration file to the correct location
-sudo cp ${CONFIG_FILE} /etc/lirc/lircd.conf.d/
+sudo cp ${CONFIG_FILE} /etc/lirc/lircd.conf
 
 # Restart LIRC service
 sudo systemctl restart lircd
