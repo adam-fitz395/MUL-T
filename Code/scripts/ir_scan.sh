@@ -28,7 +28,7 @@ begin remote
   flags RAW_CODES
   eps            30
   aeps          100
-  gap          200000  # Default gap if none detected
+  gap          200000
   toggle_bit_mask 0x0
 
   begin raw_codes
