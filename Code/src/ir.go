@@ -9,7 +9,9 @@ import (
 	"github.com/rivo/tview"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
+	"time"
 )
 
 // Function that loads the menu for infrared functions
@@ -149,9 +151,22 @@ func loadIRScan() {
 					timings = timings[:len(timings)-1]
 				}
 
+				// Create directory if needed
+				dirPath := "../logfiles/rawir"
+				if err := os.MkdirAll(dirPath, 0755); err != nil {
+					app.QueueUpdateDraw(func() {
+						scanText.SetText("[red]Error creating directory: " + err.Error())
+					})
+					return
+				}
+
+				// Generate filename with timestamp
+				filename := filepath.Join(dirPath, fmt.Sprintf("ir_%s.txt",
+					time.Now().Format("20060102_150405"))) // YYYYMMDD_HHMMSS format
+
 				// Save to file
 				content := strings.Join(timings, " ")
-				if err := os.WriteFile("ir_timings.txt", []byte(content), 0644); err != nil {
+				if err := os.WriteFile(filename, []byte(content), 0644); err != nil {
 					app.QueueUpdateDraw(func() {
 						scanText.SetText("[red]Save failed: " + err.Error())
 					})
