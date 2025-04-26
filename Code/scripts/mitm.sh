@@ -1,15 +1,16 @@
 #!/bin/bash
 
-# Path configurations
+# File configuration
 LOG_DIR="../logfiles/mitmlogs"
 LOG_FILE="$LOG_DIR/mitm_log_$(date +%s).log"
 PID_FILE="$LOG_DIR/mitm.pid"
 
-ONOFF=$1
+ONOFF=$1 # Input variable that determines "on" or "off" status for attack
 
 # Ensure log directory exists
 mkdir -p "$LOG_DIR"
 
+# Determine whether to turn MITM attack on or off
 if [[ "$ONOFF" == "On" ]]; then
     # Check if already running
     if [ -f "$PID_FILE" ]; then
@@ -18,7 +19,7 @@ if [[ "$ONOFF" == "On" ]]; then
     fi
 
     # Start Ettercap in quiet mode and pipe output to logfile
-    sudo stdbuf -oL ettercap -T -q -M arp > "$LOG_FILE" 2>&1 &
+    sudo stdbuf -oL ettercap -T -q -M arp > "$LOG_FILE" 2>&1 & # Redirects both standard output and errors to the log file.
     MITM_PID=$!
 
     # Save PID and log path to PID_FILE

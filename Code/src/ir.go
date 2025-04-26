@@ -14,8 +14,8 @@ import (
 	"time"
 )
 
-// Function that loads the menu for infrared functions
-func loadIRMenu() {
+// LoadIRMenu is a function that loads the menu for infrared interactions
+func LoadIRMenu() {
 	buttons = nil
 
 	scanButton := tview.NewButton("Scan").
@@ -23,13 +23,6 @@ func loadIRMenu() {
 			pages.SwitchToPage("irscan")
 		})
 	scanButton.SetBorder(true).
-		SetBorderColor(tcell.ColorWhite)
-
-	emitButton := tview.NewButton("Emit").
-		SetSelectedFunc(func() {
-			pages.SwitchToPage("iremit")
-		})
-	emitButton.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
 
 	backButton := tview.NewButton("Back").
@@ -42,15 +35,15 @@ func loadIRMenu() {
 	IRFlex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(scanButton, 0, 1, true).
-		AddItem(backButton, 0, 1, false).
-		AddItem(emitButton, 0, 1, false)
+		AddItem(backButton, 0, 1, false)
 
 	buttons = []*tview.Button{scanButton, backButton}
 	pages.AddPage("infrared", IRFlex, true, false)
-	enableTabFocus(IRFlex, buttons)
+	EnableTabFocus(IRFlex, buttons)
 }
 
-func loadIRScan() {
+// LoadIRScan is a function that loads the infrared scanning sub-menu
+func LoadIRScan() {
 	buttons = nil
 	scanText := tview.NewTextView().
 		SetDynamicColors(true).SetText("[green]Ready to scan!")
@@ -88,9 +81,9 @@ func loadIRScan() {
 						"s/^driver.*/driver = default/",
 						"/etc/lirc/lirc_options.conf"),
 
-					// Set device to /dev/lirc0 (note escaped slashes)
+					// Set device to /dev/lirc1 (note escaped slashes)
 					exec.Command("sudo", "sed", "-i",
-						"s/^device.*/device = \\/dev\\/lirc0/",
+						"s/^device.*/device = \\/dev\\/lirc1/",
 						"/etc/lirc/lirc_options.conf"),
 				}
 
@@ -198,5 +191,5 @@ func loadIRScan() {
 
 	buttons = []*tview.Button{scanButton, scanBackButton}
 	pages.AddPage("irscan", scanFlex, true, false)
-	enableTabFocus(scanFlex, buttons)
+	EnableTabFocus(scanFlex, buttons)
 }

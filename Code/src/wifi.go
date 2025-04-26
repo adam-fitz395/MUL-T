@@ -11,8 +11,8 @@ import (
 	"sync"
 )
 
-// Function that loads wi-fi sub-menu
-func loadWifiMenu() {
+// LoadWifiMenu is a function that loads the Wi-Fi sub-menu
+func LoadWifiMenu() {
 	buttons = nil
 
 	sniffButton := tview.NewButton("Sniff").
@@ -53,11 +53,11 @@ func loadWifiMenu() {
 
 	pages.AddPage("wifi", wifiFlex, true, false) // Add the Wi-Fi page to pages
 	buttons = []*tview.Button{sniffButton, scanButton, MITMButton, backButton}
-	enableTabFocus(wifiFlex, buttons)
+	EnableTabFocus(wifiFlex, buttons)
 }
 
-// Function that loads wi-fi sniffing sub-menu
-func loadSniffingMenu() {
+// LoadSniffingMenu is a function that loads the wi-fi sniffing sub-menu
+func LoadSniffingMenu() {
 	buttons = nil
 	var duration int
 
@@ -135,10 +135,11 @@ func loadSniffingMenu() {
 
 	buttons = append(buttons, sniffButton, backButton)
 	pages.AddPage("sniff", sniffFlex, true, false)
-	enableTabFocus(sniffFlex, buttons)
+	EnableTabFocus(sniffFlex, buttons)
 }
 
-func loadScanMenu() {
+// LoadScanMenu is a function that loads the wi-fi scan sub-menu
+func LoadScanMenu() {
 	buttons = nil
 	var checkESSID, checkAddress, checkFreq = true, true, true
 
@@ -315,10 +316,11 @@ func loadScanMenu() {
 
 	buttons = []*tview.Button{scanButton, backButton}
 	pages.AddPage("scan", scanFlex, true, false)
-	enableTabFocus(scanFlex, buttons)
+	EnableTabFocus(scanFlex, buttons)
 }
 
-func loadMITMMenu() {
+// LoadMITMMenu is a function that loads the man-in-the-middle attack sub-menu
+func LoadMITMMenu() {
 	MITMText := tview.NewTextView().
 		SetDynamicColors(true).
 		SetText("[green]Ready to perform MITM attack!")
@@ -419,5 +421,5 @@ func loadMITMMenu() {
 
 	buttons = []*tview.Button{startMITMButton, stopMITMButton, MITMBackButton}
 	pages.AddPage("mitm", MITMFlex, true, false)
-	enableTabFocus(MITMFlex, buttons)
+	EnableTabFocus(MITMFlex, buttons)
 }

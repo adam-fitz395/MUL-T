@@ -10,7 +10,8 @@ import (
 	"strings"
 )
 
-func loadBluetoothMenu() {
+// LoadBluetoothMenu is a function that loads the Bluetooth sub-menu
+func LoadBluetoothMenu() {
 	buttons = nil
 
 	btScanButton := tview.NewButton("Scan").
@@ -42,10 +43,11 @@ func loadBluetoothMenu() {
 
 	buttons = []*tview.Button{btScanButton, btDeauthButton, backButton}
 	pages.AddPage("bluetooth", bluetoothFlex, true, false)
-	enableTabFocus(bluetoothFlex, buttons)
+	EnableTabFocus(bluetoothFlex, buttons)
 }
 
-func loadBluetoothScan() {
+// LoadBluetoothScan is a function that loads the Bluetooth scan sub-menu
+func LoadBluetoothScan() {
 	buttons = nil
 	var duration int
 	btScanText := tview.NewTextView().
@@ -158,10 +160,11 @@ func loadBluetoothScan() {
 
 	buttons = []*tview.Button{btScanButton, backButton}
 	pages.AddPage("btScan", btScanFlex, true, false)
-	enableTabFocus(btScanFlex, buttons)
+	EnableTabFocus(btScanFlex, buttons)
 }
 
-func loadBluetoothDeauth() {
+// LoadBluetoothDeauth is a function that loads the Bluetooth de-authentication attack sub-menu
+func LoadBluetoothDeauth() {
 	buttons = nil
 
 	deauthText := tview.NewTextView().
@@ -276,7 +279,10 @@ func loadBluetoothDeauth() {
 			}
 			deviceMAC := attackDevice[:17]
 
-			exec.Command("sudo", "bash", "../scripts/bt_deauth.sh", deviceMAC).Run()
+			err := exec.Command("sudo", "bash", "../scripts/bt_deauth.sh", deviceMAC).Run()
+			if err != nil {
+				return
+			}
 		})
 
 	deauthButton.SetBorder(true).
@@ -299,5 +305,5 @@ func loadBluetoothDeauth() {
 
 	buttons = []*tview.Button{scanButton, deauthButton, backButton}
 	pages.AddPage("btDeauth", deauthFlex, true, false)
-	enableTabFocus(deauthFlex, buttons)
+	EnableTabFocus(deauthFlex, buttons)
 }

@@ -1,3 +1,4 @@
+// Package main provides a terminal-based user interface (TUI) for wireless pen-testing tools.
 package main
 
 import (
@@ -13,11 +14,14 @@ var (
 	buttons []*tview.Button
 )
 
+// main initializes and runs the TUI application.
+// It sets up the application instance, creates page container,
+// initializes all menus, and starts the event loop.
 func main() {
 	app = tview.NewApplication()
 	pages = tview.NewPages()
 
-	instantiateMenus()
+	InstantiateMenus()
 
 	// Run application or return error
 	if err := app.SetRoot(pages, true).
@@ -28,22 +32,22 @@ func main() {
 	}
 }
 
-// Function that instantiates all menus
-func instantiateMenus() {
-	loadMainMenu()
-	loadWifiMenu()
-	loadSniffingMenu()
-	loadScanMenu()
-	loadMITMMenu()
-	loadBluetoothMenu()
-	loadBluetoothScan()
-	loadBluetoothDeauth()
-	loadIRMenu()
-	loadIRScan()
+// InstantiateMenus is a function initializes all application menus and pages.
+func InstantiateMenus() {
+	LoadMainMenu()
+	LoadWifiMenu()
+	LoadSniffingMenu()
+	LoadScanMenu()
+	LoadMITMMenu()
+	LoadBluetoothMenu()
+	LoadBluetoothScan()
+	LoadBluetoothDeauth()
+	LoadIRMenu()
+	LoadIRScan()
 }
 
-// Function to load main menu
-func loadMainMenu() {
+// LoadMainMenu is a function that creates and configures the root menu page.
+func LoadMainMenu() {
 	buttons = nil // Set buttons to nil to clear buttons from previous menu
 
 	wifiButton := tview.NewButton("Wi-Fi").
@@ -89,11 +93,14 @@ func loadMainMenu() {
 
 	buttons = []*tview.Button{wifiButton, bluetoothButton, IRButton, exitButton}
 	pages.AddPage("main", mainFlex, true, true) // Add the main page to pages
-	enableTabFocus(mainFlex, buttons)
+	EnableTabFocus(mainFlex, buttons)
 }
 
-// Function that allows user to switch focus between elements using the "Tab" button
-func enableTabFocus(layout *tview.Flex, focusables []*tview.Button) {
+// EnableTabFocus is a function that allows users to switch focus between elements using the "Tab" button
+// Parameters:
+//   - layout: The Flex container to enable navigation in
+//   - focusables: Slice of buttons that should receive focus
+func EnableTabFocus(layout *tview.Flex, focusables []*tview.Button) {
 	layout.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyTab {
 			// Find the currently focused button and move to the next one

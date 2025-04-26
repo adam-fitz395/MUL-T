@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# File configuration
 TEMP_LOG_FILE="../logfiles/btlogs/tmpscan.log"
 
 # Ensure directory exists
@@ -20,7 +21,7 @@ sudo timeout 5 stdbuf -oL hcitool lescan > "$FIFO_LOG" 2>&1 &
 
 # Process FIFO output in the background
 (
-  declare -A seen_macs  # Track MAC addresses we've already seen
+  declare -A seen_macs  # Track MAC addresses already seen
   while read -r line; do
     if echo "$line" | grep -qE '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}'; then
       mac=$(echo "$line" | awk '{print $1}')
@@ -34,7 +35,7 @@ sudo timeout 5 stdbuf -oL hcitool lescan > "$FIFO_LOG" 2>&1 &
              # Only process if MAC hasn't been seen before
             if [[ -z "${seen_macs[$mac]+_}" ]]; then
               echo "$mac - $name" | tee -a "$LOG_FILE"
-              seen_macs[$mac]=1  # Mark as seen AFTER processing
+              seen_macs[$mac]=1  # Mark as seen
             fi
     fi
   done < "$FIFO_LOG"

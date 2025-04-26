@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# File configurations
 TIMESTAMP=$(date +%s)
 LOG_DIR="../logfiles/wifisnifflogs"
 LOG_FILE="$LOG_DIR/sniff_log_$TIMESTAMP.pcap"
@@ -17,8 +18,8 @@ SCAN_PID=$!
 # Start background process to kill scan after set duration
 (
   sleep "$duration"
-  echo "Sending SIGINT to ettercap (PID: $SCAN_PID)"
-  sudo kill -SIGKILL "$SCAN_PID"
+  echo "Sending SIGKILL to ettercap (PID: $SCAN_PID)"
+  sudo kill -SIGKILL "$SCAN_PID" # Send SIGKILL to emulate CTRL+C
 ) &
 
 echo "Scanning for $duration seconds..."
