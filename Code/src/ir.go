@@ -63,7 +63,6 @@ func loadIRScan() {
 
 				// Stop LIRC services
 				stopServices := []*exec.Cmd{
-					exec.Command("sudo", "systemctl", "stop", "lircd.socket"),
 					exec.Command("sudo", "systemctl", "stop", "lircd"),
 					exec.Command("sudo", "killall", "lircd"),
 				}
