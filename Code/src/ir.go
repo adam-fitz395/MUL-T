@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -61,18 +62,20 @@ func loadIRScan() {
 					scanText.SetText("[yellow]Stopping LIRC services...")
 				})
 
-				// Stop LIRC services
-				stopServices := []*exec.Cmd{
-					exec.Command("sudo", "systemctl", "stop", "lircd"),
-					exec.Command("sudo", "killall", "lircd"),
-				}
-
-				for _, cmd := range stopServices {
-					if err := cmd.Run(); err != nil {
-						app.QueueUpdateDraw(func() {
-							scanText.SetText("[red]Error stopping services: " + err.Error())
-						})
-						return
+				// Stop LIRC service
+				stopCmd := exec.Command("sudo", "systemctl", "stop", "lircd")
+				if err := stopCmd.Run(); err != nil {
+					// Check if error is acceptable "not active" state
+					var exitErr *exec.ExitError
+					if errors.As(err, &exitErr) {
+						if exitErr.ExitCode() == 5 { // systemctl exit code 5 = unit not loaded
+							// This is acceptable, continue
+						} else {
+							app.QueueUpdateDraw(func() {
+								scanText.SetText("[red]Error stopping service: " + err.Error())
+							})
+							return
+						}
 					}
 				}
 
