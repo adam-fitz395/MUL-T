@@ -13,13 +13,7 @@ sudo sed -i 's/^device.*/device = \/dev\/lirc0/' /etc/lirc/lirc_options.conf
 sudo cp ${CONFIG_FILE} /etc/lirc/lircd.conf
 
 # Restart LIRC service
-sudo systemctl restart lircd
-
-# Verify the remote name is recognized
-if ! irsend LIST "" "" | grep -q "${REMOTE_NAME}"; then
-  echo "Error: Remote '${REMOTE_NAME}' not recognized. Check the configuration file."
-  exit 1
-fi
+sudo systemctl stop lircd
 
 # Send the IR signal
 irsend SEND_ONCE ${REMOTE_NAME} ${BUTTON_NAME}

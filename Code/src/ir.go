@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 // Function that loads the menu for infrared functions
@@ -55,33 +58,98 @@ func loadIRScan() {
 		SetSelectedFunc(func() {
 			go func() {
 				app.QueueUpdateDraw(func() {
-					scanText.SetText("[yellow]Stopping LIRC service...")
+					scanText.SetText("[yellow]Stopping LIRC services...")
 				})
 
-				// Stop LIRC service
-				if err := exec.Command("sudo", "systemctl", "stop", "lircd").Run(); err != nil {
-					app.QueueUpdateDraw(func() {
-						scanText.SetText("[red]Error stopping LIRC: " + err.Error())
-					})
-					return
+				// Stop LIRC services
+				stopServices := []*exec.Cmd{
+					exec.Command("sudo", "systemctl", "stop", "lircd.socket"),
+					exec.Command("sudo", "systemctl", "stop", "lircd"),
+					exec.Command("sudo", "killall", "lircd"),
+				}
+
+				for _, cmd := range stopServices {
+					if err := cmd.Run(); err != nil {
+						app.QueueUpdateDraw(func() {
+							scanText.SetText("[red]Error stopping services: " + err.Error())
+						})
+						return
+					}
+				}
+
+				// Change infrared interface
+				changeInterface := []*exec.Cmd{
+					// Set driver to default
+					exec.Command("sudo", "sed", "-i",
+						"s/^driver.*/driver = default/",
+						"/etc/lirc/lirc_options.conf"),
+
+					// Set device to /dev/lirc0 (note escaped slashes)
+					exec.Command("sudo", "sed", "-i",
+						"s/^device.*/device = \\/dev\\/lirc0/",
+						"/etc/lirc/lirc_options.conf"),
+				}
+
+				for _, cmd := range changeInterface {
+					if err := cmd.Run(); err != nil {
+						app.QueueUpdateDraw(func() {
+							scanText.SetText("[red]Error changing interface: " + err.Error())
+						})
+						return
+					}
 				}
 
 				// Capture IR signal
 				app.QueueUpdateDraw(func() {
-					scanText.SetText("[green]Press remote button now...")
+					scanText.SetText("[green]Press remote button now... (10 second window)")
 				})
 
-				cmd := exec.Command("mode2", "-d", "/dev/lirc1")
+				cmd := exec.Command("timeout", "5", "mode2", "-d", "/dev/lirc1")
 				output, err := cmd.CombinedOutput()
 				if err != nil {
+					// Ignress timeout error (expected)
+					if !strings.Contains(err.Error(), "exit status 124") {
+						app.QueueUpdateDraw(func() {
+							scanText.SetText("[red]Capture error: " + err.Error())
+						})
+						return
+					}
+				}
+
+				// Process timings
+				app.QueueUpdateDraw(func() {
+					scanText.SetText("[yellow]Processing timings...")
+				})
+
+				var timings []string
+				scanner := bufio.NewScanner(bytes.NewReader(output))
+				for scanner.Scan() {
+					line := scanner.Text()
+					if strings.HasPrefix(line, "pulse ") || strings.HasPrefix(line, "space ") {
+						parts := strings.Fields(line)
+						if len(parts) == 2 {
+							timings = append(timings, parts[1])
+						}
+					}
+				}
+
+				// Validate results
+				if len(timings) < 20 {
 					app.QueueUpdateDraw(func() {
-						scanText.SetText("[red]Capture failed: " + err.Error())
+						scanText.SetText(fmt.Sprintf(
+							"[red]Insufficient data (%d timings)", len(timings)))
 					})
 					return
 				}
 
-				// Save raw data
-				if err := os.WriteFile("ir_raw.txt", output, 0644); err != nil {
+				// Fix odd count
+				if len(timings)%2 != 0 {
+					timings = timings[:len(timings)-1]
+				}
+
+				// Save to file
+				content := strings.Join(timings, " ")
+				if err := os.WriteFile("ir_timings.txt", []byte(content), 0644); err != nil {
 					app.QueueUpdateDraw(func() {
 						scanText.SetText("[red]Save failed: " + err.Error())
 					})
@@ -90,8 +158,8 @@ func loadIRScan() {
 
 				app.QueueUpdateDraw(func() {
 					scanText.SetText(fmt.Sprintf(
-						"[green]Captured %d pulses\nSaved to [white]ir_raw.txt",
-						len(output)))
+						"[green]Captured %d timings\nSaved to [white]ir_timings.txt",
+						len(timings)))
 				})
 			}()
 		})
@@ -114,44 +182,4 @@ func loadIRScan() {
 	buttons = []*tview.Button{scanButton, scanBackButton}
 	pages.AddPage("irscan", scanFlex, true, false)
 	enableTabFocus(scanFlex, buttons)
-}
-
-func loadIREmit() {
-	buttons = nil
-	emitText := tview.NewTextView().
-		SetDynamicColors(true).SetText("[green]Ready to scan!")
-	emitText.SetBorder(true).
-		SetBorderColor(tcell.ColorWhite)
-
-	emitDropdown := tview.NewDropDown().
-		AddOption("")
-	emitDropdown.SetBorder(true).
-		SetBorderColor(tcell.ColorWhite)
-
-	emitButton := tview.NewButton("Emit").
-		SetSelectedFunc(func() {
-			go func() {
-
-			}()
-		})
-	emitButton.SetBorder(true).
-		SetBorderColor(tcell.ColorWhite)
-
-	emitBackButton := tview.NewButton("Back").
-		SetSelectedFunc(func() {
-			pages.SwitchToPage("infrared")
-		})
-	emitBackButton.SetBorder(true).
-		SetBorderColor(tcell.ColorWhite)
-
-	emitFlex := tview.NewFlex().
-		SetDirection(tview.FlexRow).
-		AddItem(emitText, 0, 3, false).
-		AddItem(emitDropdown, 0, 1, true).
-		AddItem(emitButton, 0, 1, true).
-		AddItem(emitBackButton, 0, 1, false)
-
-	buttons = []*tview.Button{emitButton, emitBackButton}
-	pages.AddPage("iremit", emitFlex, true, false)
-	enableTabFocus(emitFlex, buttons)
 }
