@@ -45,10 +45,28 @@ func LoadIRMenu() {
 // LoadIRScan is a function that loads the infrared scanning sub-menu
 func LoadIRScan() {
 	buttons = nil
+	var duration int
+
 	scanText := tview.NewTextView().
 		SetDynamicColors(true).SetText("[green]Ready to scan!")
 	scanText.SetBorder(true).
 		SetBorderColor(tcell.ColorWhite)
+
+	scanDuration := tview.NewDropDown().SetLabel("Duration (Seconds): ").SetLabelColor(tcell.ColorWhite)
+	scanDuration.
+		AddOption("10",
+			func() {
+				duration = 10
+			}).
+		AddOption("20", func() {
+			duration = 20
+		}).
+		AddOption("30", func() {
+			duration = 30
+		}).AddOption("60", func() {
+		duration = 60
+	})
+	scanDuration.SetCurrentOption(0)
 
 	scanButton := tview.NewButton("Scan").
 		SetSelectedFunc(func() {
@@ -101,7 +119,7 @@ func LoadIRScan() {
 					scanText.SetText("[green]Press remote button now... (10 second window)")
 				})
 
-				cmd := exec.Command("timeout", "5", "mode2", "-d", "/dev/lirc1")
+				cmd := exec.Command("timeout", fmt.Sprintf("%d", duration), "mode2", "-d", "/dev/lirc1")
 				output, err := cmd.CombinedOutput()
 				if err != nil {
 					// Ignress timeout error (expected)
@@ -186,6 +204,7 @@ func LoadIRScan() {
 	scanFlex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(scanText, 0, 3, false).
+		AddItem(scanDuration, 0, 1, false).
 		AddItem(scanButton, 0, 1, true).
 		AddItem(scanBackButton, 0, 1, false)
 

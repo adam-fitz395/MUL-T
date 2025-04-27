@@ -1,49 +1,67 @@
 #!/bin/bash
 
-LOG_DIR="../logfiles/irscanlogs"
-REMOTE_NAME="MY_REMOTE"
-BUTTON_NAME="KEY_POWER"
-CONFIG_DIR="ir_signals"
+# File configuration
+CONFIG_FILE="/etc/lirc/lirc_options.conf"
+RECEIVER_DEVICE="/dev/lirc1"
+OUTPUT_DIR="../logfiles/rawir"
+MIN_TIMINGS=20
+DURATION=$1
 
-# Set LIRC options for the receiver
-sudo sed -i 's/^driver.*/driver = default/' /etc/lirc/lirc_options.conf
-sudo sed -i 's/^device.*/device = \/dev\/lirc1/' /etc/lirc/lirc_options.conf
+# Stop LIRC service with error handling
+echo "Stopping LIRC services..."
+sudo systemctl stop lircd 2>/dev/null
+status=$?
 
-# Capture raw signal for 10 seconds
-sudo systemctl stop lircd
-sudo killall lircd 2>/dev/null
-timeout 10 mode2 -d /dev/lirc1 > power_button.raw
+# Handle systemctl exit codes
+if [ $status -ne 0 ] && [ $status -ne 5 ]; then
+  echo "Error: Failed to stop lircd service (code $status)" >&2
+  exit 1
+fi
+
+# Update LIRC configuration to use receiver LIRC0
+echo "Updating interface configuration..."
+sudo sed -i "s/^driver.*/driver = default/" "$CONFIG_FILE" || exit 1
+sudo sed -i "s/^device.*/device = \/dev\/lirc1/" "$CONFIG_FILE" || exit 1
+
+# Capture IR signals
+echo "Press remote button within 5 seconds..."
+raw_output=$(timeout "$DURATION" mode2 -d "$RECEIVER_DEVICE" 2>&1)
+status=$?
+
+# Handle capture errors (ignore timeout)
+if [ $status -ne 0 ] && [ $status -ne 124 ]; then
+  echo "Capture error: $raw_output" >&2
+  exit 1
+fi
 
 # Process timings
-grep -Eo '[0-9]+' power_button.raw | tr '\n' ' ' > power_button.timings
+timings=()
+while IFS= read -r line; do
+  if [[ $line =~ (pulse|space)[[:space:]]+([0-9]+) ]]; then
+    timings+=("${BASH_REMATCH[2]}")
+  fi
+done <<< "$raw_output"
 
-# Create LIRC config
-GAP=$(head -n 1 power_button.timings | awk '{print $1}')
-CODE=$(awk '{$1=""; print $0}' power_button.timings | sed 's/^ //')
+# Validate results
+if [ ${#timings[@]} -lt $MIN_TIMINGS ]; then
+  echo "Error: Insufficient data (${#timings[@]} timings)" >&2
+  exit 1
+fi
 
-# Write the configuration file with variable expansion
-cat <<-EOF > ${CONFIG_DIR}/${REMOTE_NAME}.lircd.conf
-begin remote
-  name  MY_REMOTE
-  flags RAW_CODES
-  eps            30
-  aeps          100
-  gap          200000
-  toggle_bit_mask 0x0
+# Fix odd count
+if [ $(( ${#timings[@]} % 2 )) -ne 0 ]; then
+  unset 'timings[${#timings[@]}-1]'
+fi
 
-  begin raw_codes
-    name ${BUTTON_NAME}
-      ${CODE}
-  end raw_codes
-end remote
-EOF
+# Create output directory
+mkdir -p "$OUTPUT_DIR" || exit 1
 
-# Optional: Add frequency if using modulated signal
-sed -i "/^begin remote/a \ \ frequency    38000" ${CONFIG_DIR}/${REMOTE_NAME}.lircd.conf
+# Generate filename
+timestamp=$(date +%Y%m%d_%H%M%S)
+output_file="$OUTPUT_DIR/ir_$timestamp.txt"
 
-# Move files to organized locations
-mkdir -p ${CONFIG_DIR}
-mv power_button.* ${CONFIG_DIR}/
-mv ${CONFIG_DIR}/${REMOTE_NAME}.lircd.conf ${CONFIG_DIR}/
+# Save to file
+echo "${timings[*]}" > "$output_file" || exit 1
 
-echo "Config file created: ${CONFIG_DIR}/${REMOTE_NAME}.lircd.conf"
+echo "Success: Captured ${#timings[@]} timings"
+echo "Saved to: $output_file"
