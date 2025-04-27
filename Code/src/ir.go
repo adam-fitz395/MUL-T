@@ -72,7 +72,7 @@ func LoadIRScan() {
 				})
 
 				durationStr := fmt.Sprintf("%d", duration)
-				cmd := exec.Command("bash", "/path/to/your/script.sh", durationStr) // Update path!
+				cmd := exec.Command("bash", "../scripts/ir_scan.sh", durationStr) // Update path!
 
 				// Get stdout pipe
 				stdout, err := cmd.StdoutPipe()
