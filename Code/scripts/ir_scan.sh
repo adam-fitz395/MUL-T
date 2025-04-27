@@ -18,13 +18,13 @@ if [ $status -ne 0 ] && [ $status -ne 5 ]; then
   exit 1
 fi
 
-# Update LIRC configuration to use receiver LIRC0
+# Update LIRC configuration to use receiver LIRC1
 echo "Updating interface configuration..."
 sudo sed -i "s/^driver.*/driver = default/" "$CONFIG_FILE" || exit 1
 sudo sed -i "s/^device.*/device = \/dev\/lirc1/" "$CONFIG_FILE" || exit 1
 
 # Capture IR signals
-echo "Press remote button within 5 seconds..."
+echo "Hold down remote button for $DURATION seconds..."
 raw_output=$(timeout "$DURATION" mode2 -d "$RECEIVER_DEVICE" 2>&1)
 status=$?
 
@@ -48,7 +48,7 @@ if [ ${#timings[@]} -lt $MIN_TIMINGS ]; then
   exit 1
 fi
 
-# Fix odd count
+# Fix odd timing count
 if [ $(( ${#timings[@]} % 2 )) -ne 0 ]; then
   unset 'timings[${#timings[@]}-1]'
 fi

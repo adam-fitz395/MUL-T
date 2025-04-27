@@ -74,7 +74,7 @@ func LoadIRScan() {
 				durationStr := fmt.Sprintf("%d", duration)
 				cmd := exec.Command("bash", "../scripts/ir_scan.sh", durationStr) // Update path!
 
-				// Get stdout pipe
+				// Get stdout pipe for text output
 				stdout, err := cmd.StdoutPipe()
 				if err != nil {
 					app.QueueUpdateDraw(func() {
@@ -83,7 +83,7 @@ func LoadIRScan() {
 					return
 				}
 
-				// Get stderr pipe (optional, if you want error messages too)
+				// Get stderr pipe for error messages
 				stderr, err := cmd.StderrPipe()
 				if err != nil {
 					app.QueueUpdateDraw(func() {
@@ -108,7 +108,7 @@ func LoadIRScan() {
 
 					// Update scanText with each new line
 					app.QueueUpdateDraw(func() {
-						currentText := scanText.GetText(true) // 'true' to get without markup parsing if needed
+						currentText := scanText.GetText(true) // 'true' to get text without styling
 						scanText.SetText(currentText + "\n" + line)
 					})
 				}
