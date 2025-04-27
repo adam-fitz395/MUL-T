@@ -31,8 +31,6 @@ func LoadIRMenu() {
 		SetDirection(tview.FlexRow).
 		AddItem(scanButton, 0, 1, true).
 		AddItem(backButton, 0, 1, false)
-	IRFlex.SetBorder(true).
-		SetBorderColor(tcell.ColorWhite)
 
 	buttons = []*tview.Button{scanButton, backButton}
 	pages.AddPage("infrared", IRFlex, true, false)
