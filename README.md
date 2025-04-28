@@ -11,3 +11,5 @@ MUL-T is a multi-tool is designed with a variety of different utilities that can
 - Ettercap
 - Tview
 - Hcitools
+## To Run
+To run this software go into the `../Code/src` folder and run the command `sudo ./MUL-T`.
