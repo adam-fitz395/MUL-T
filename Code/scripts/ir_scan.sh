@@ -40,13 +40,13 @@ fi
 # Process timings
 timings=()
 while IFS= read -r line; do
-  if [[ $line =~ (pulse|space)[[:space:]]+([0-9]+) ]]; then
-    timings+=("${BASH_REMATCH[2]}")
+  if [[ $line =~ (pulse|space)[[:space:]]+([0-9]+) ]]; then # If matches regex of "pulse XXX" OR "space XXX"
+    timings+=("${BASH_REMATCH[2]}") # Add pulse or space value to array of timings
   fi
 done <<< "$raw_output"
 
 # Validate results
-if [ ${#timings[@]} -lt $MIN_TIMINGS ]; then
+if [ ${#timings[@]} -lt $MIN_TIMINGS ]; then # If number of timings < 20
   echo "Error: Insufficient data (${#timings[@]} timings)" >&2
   exit 1
 fi
@@ -55,9 +55,6 @@ fi
 if [ $(( ${#timings[@]} % 2 )) -ne 0 ]; then
   unset 'timings[${#timings[@]}-1]'
 fi
-
-# Create output directory
-mkdir -p "$OUTPUT_DIR" || exit 1
 
 # Generate filename
 timestamp=$(date +%Y%m%d_%H%M%S)
