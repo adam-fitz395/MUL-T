@@ -7,6 +7,9 @@ OUTPUT_DIR="../logfiles/rawir"
 MIN_TIMINGS=20
 DURATION=$1
 
+# Make  output directory if it does not exist
+mkdir -p "$OUTPUT_DIR"
+
 # Stop LIRC service with error handling
 echo "Stopping LIRC services..."
 sudo systemctl stop lircd 2>/dev/null

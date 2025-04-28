@@ -1,0 +1,45 @@
+Package main provides a terminal-based user interface (TUI) for wireless
+pen-testing tools.
+
+FUNCTIONS
+
+func EnableTabFocus(layout *tview.Flex, focusables []*tview.Button)
+    EnableTabFocus is a function that allows users to switch focus between
+    elements using the "Tab" button Parameters:
+      - layout: The Flex container to enable navigation in
+      - focusables: Slice of buttons that should receive focus
+
+func InstantiateMenus()
+    InstantiateMenus is a function initializes all application menus and pages.
+
+func LoadBluetoothDeauth()
+    LoadBluetoothDeauth is a function that loads the Bluetooth de-authentication
+    attack sub-menu
+
+func LoadBluetoothMenu()
+    LoadBluetoothMenu is a function that loads the Bluetooth sub-menu
+
+func LoadBluetoothScan()
+    LoadBluetoothScan is a function that loads the Bluetooth scan sub-menu
+
+func LoadIRMenu()
+    LoadIRMenu is a function that loads the menu for infrared interactions
+
+func LoadIRScan()
+    LoadIRScan is a function that loads the infrared scanning sub-menu
+
+func LoadMITMMenu()
+    LoadMITMMenu is a function that loads the man-in-the-middle attack sub-menu
+
+func LoadMainMenu()
+    LoadMainMenu is a function that creates and configures the root menu page.
+
+func LoadScanMenu()
+    LoadScanMenu is a function that loads the wi-fi scan sub-menu
+
+func LoadSniffingMenu()
+    LoadSniffingMenu is a function that loads the wi-fi sniffing sub-menu
+
+func LoadWifiMenu()
+    LoadWifiMenu is a function that loads the Wi-Fi sub-menu
+
